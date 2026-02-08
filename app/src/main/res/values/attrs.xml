@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="LoadingButton">
+        <attr name="android:text" />
+        <attr name="android:textColor" />
+        <attr name="android:textStyle" />
+        <attr name="android:textSize" />
+        <attr name="buttonColor" format="color" />
+    </declare-styleable>
+    <declare-styleable name="DotsLoadingView">
+        <attr name="dotColor" format="color" />
+        <attr name="dotMaxRadius" format="dimension" />
+        <attr name="orbitRadius" format="dimension" />
+        <attr name="dotCount" format="integer" />
+    </declare-styleable>
+</resources>

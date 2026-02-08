@@ -1,0 +1,19 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.VERIFY" parent="Theme.Material3.Light.NoActionBar">
+        <!-- Customize your light theme here. -->
+        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="colorPrimary">@color/blue_corporative_primary</item>
+        <item name="colorPrimaryVariant">@color/blue_corporative_primary</item>
+        <item name="colorOnPrimary">@color/grey_text_dark</item>
+
+        <item name="android:statusBarColor">@color/blue_corporative_primary</item>
+
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+
+        <item name="android:actionMenuTextColor">@color/grey_text_dark</item>
+        <item name="android:textColorPrimary">@color/grey_text_dark</item>
+    </style>
+
+    <style name="Theme.VERIFY" parent="Base.Theme.VERIFY" />
+</resources>

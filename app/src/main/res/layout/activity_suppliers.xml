@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".UI.Suppliers.SuppliersActivity">
+
+    <com.kasolution.verify.core.utils.Components.LoadingButton
+        android:id="@+id/btnSaveClient"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:layout_marginTop="244dp"
+        android:text="GUARDAR CLIENTE"
+        android:textColor="@android:color/white"
+        app:buttonColor="@color/blue_corporative_primary"
+        android:textStyle="bold"
+        android:textSize="14dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btnToggleLoading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:text="Alternar Carga"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnSaveClient"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

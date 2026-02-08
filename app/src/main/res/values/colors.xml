@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="blue_corporative_primary">#1E88E5</color>
+    <color name="cyan_accent">#00BCD4</color>
+    <color name="white_pure">#FFFFFF</color>
+    <color name="grey_background_app">#F5F5F5</color>
+    <color name="grey_text_dark">#212121</color>
+    <color name="grey_text_secondary">#757575</color>
+    <color name="semantic_success_green">#4CAF50</color>
+    <color name="semantic_warning_orange">#FF9800</color>
+    <color name="semantic_error_red">#F44336</color>
+    <color name="semantic_info_blue">#03A9F4</color>
+    <color name="module_sales_cash">@color/semantic_success_green</color>
+    <color name="module_inventory_supply">@color/semantic_warning_orange</color>
+    <color name="module_clients_users">@color/semantic_info_blue</color>
+    <color name="module_reports_stats">@color/blue_corporative_primary</color>
+    <color name="selected_item_blue">#1A2196F3</color>
+    <color name="booton_line_edittext">#68B0F2</color>
+    <color name="grey_image_backgroud">#D7D7D7</color>
+
+
+    <color name="background_card_success">#E8F5E9</color>
+    <color name="background_card_error">#FFEBEE</color>
+    <color name="background_card_info">#E1F5FE</color>
+
+
+    <color name="lightblue_metric">#ADD8E6</color>
+    <color name="lightorange_metric">#FFE4B5</color>
+    <color name="lightpurple_metric">#D8BFD8</color>
+
+    <color name="green_pos">#4CAF50</color>
+    <color name="orange_inventory">#FF9800</color>
+    <color name="blue_clients">#2196F3</color>
+    <color name="purple_suppliers">#9C27B0</color>
+    <color name="red_reports">#F44336</color>
+    <color name="teal_cash">#009688</color>
+    <color name="indigo_users">#3F51B5</color>
+    <color name="grey_settings">#607D8B</color>
+</resources>

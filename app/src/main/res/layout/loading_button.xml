@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/innerButton"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        app:cornerRadius="12dp" />
+
+    <LinearLayout
+        android:id="@+id/dotContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <View android:id="@+id/dot1" android:layout_width="8dp" android:layout_height="8dp"
+            android:layout_margin="3dp" android:background="@drawable/circle_white" />
+        <View android:id="@+id/dot2" android:layout_width="8dp" android:layout_height="8dp"
+            android:layout_margin="3dp" android:background="@drawable/circle_white" />
+        <View android:id="@+id/dot3" android:layout_width="8dp" android:layout_height="8dp"
+            android:layout_margin="3dp" android:background="@drawable/circle_white" />
+    </LinearLayout>
+</merge>

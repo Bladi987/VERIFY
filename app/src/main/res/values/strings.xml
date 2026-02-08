@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">VERIFY</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="status_active">ACTIVO</string>
+    <string name="status_inactive">INACTIVO</string>
+    <string name="empty_list_message">Sin datos que mostrar</string>
+    <string name="reintentar">Recargar</string>
+</resources>
