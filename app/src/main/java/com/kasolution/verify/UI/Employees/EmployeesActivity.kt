@@ -63,7 +63,7 @@ class EmployeesActivity : AppCompatActivity() {
 
         lista = ArrayList()
         initRecycler()
-        initBottonSheet() // Este método ya configura el callback
+        initBottonSheet()
         setupObservers()
         viewModel.loadEmpleados()
 
@@ -160,6 +160,7 @@ class EmployeesActivity : AppCompatActivity() {
     }
 
     private fun showOptionsFor(empleado: Empleado, position: Int) {
+        binding.etSearch.clearFocus()
         selectedEmpleado = empleado
         binding.tvSelectedName.text = empleado.nombre
         adapter.setSelectedItem(position)

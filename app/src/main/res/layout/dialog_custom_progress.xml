@@ -12,7 +12,7 @@
         android:id="@+id/customLoader"
         android:layout_width="80dp"
         android:layout_height="80dp"
-        app:dotColor="@color/semantic_success_green"
+        app:dotColor="@color/blue_corporative_primary"
         app:dotCount="5"
         app:dotMaxRadius="8dp" />
 

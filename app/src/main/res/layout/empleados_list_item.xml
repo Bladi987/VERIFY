@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginVertical="4dp"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginVertical="6dp"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?android:attr/selectableItemBackground"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="2dp"
-    app:cardBackgroundColor="@color/white_pure">
+    app:cardBackgroundColor="@color/white_pure"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -24,12 +24,12 @@
             android:background="@drawable/circle_background_blue"
             android:gravity="center"
             android:text="JM"
+            android:textColor="@color/white_pure"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="@color/white_pure"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/tv_employee_name"
@@ -37,12 +37,12 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:text="Javier Mendoza"
+            android:textColor="@color/grey_text_dark"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:textColor="@color/grey_text_dark"
+            app:layout_constraintEnd_toStartOf="@+id/tv_employee_status"
             app:layout_constraintStart_toEndOf="@+id/tv_initials"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/tv_employee_status"/>
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/tv_employee_role"
@@ -50,25 +50,25 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:text="Cajero Principal"
-            android:textSize="14sp"
             android:textColor="@color/grey_text_secondary"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toStartOf="@+id/tv_employee_status"
             app:layout_constraintStart_toEndOf="@+id/tv_initials"
-            app:layout_constraintTop_toBottomOf="@+id/tv_employee_name"
-            app:layout_constraintEnd_toStartOf="@+id/tv_employee_status"/>
+            app:layout_constraintTop_toBottomOf="@+id/tv_employee_name" />
 
         <TextView
             android:id="@+id/tv_employee_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Activo"
-            android:textSize="12sp"
+            android:background="@drawable/rounded_tag_green"
             android:paddingHorizontal="8dp"
             android:paddingVertical="4dp"
-            android:background="@drawable/rounded_tag_green"
+            android:text="Activo"
             android:textColor="@color/white_pure"
+            android:textSize="12sp"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
+            app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

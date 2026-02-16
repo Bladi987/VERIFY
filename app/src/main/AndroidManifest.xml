@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="true" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
@@ -15,6 +16,15 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.VERIFY">
+        <activity
+            android:name=".UI.Components.Scanner.ScannerActivity"
+            android:exported="false" />
+        <activity
+            android:name=".UI.Category.CategoriesActivity"
+            android:exported="false" />
+        <activity
+            android:name=".UI.Inventory.InventoryActivity"
+            android:exported="false" />
         <activity
             android:name=".UI.Access.LoginActivity"
             android:exported="true" />
@@ -46,16 +56,11 @@
             android:name=".UI.Clients.ClientsActivity"
             android:exported="false" />
         <activity
-            android:name=".InventoryActivity"
-            android:exported="false" />
-        <activity
-            android:name=".SalesActivity"
+            android:name=".UI.Sales.SalesActivity"
             android:exported="false" />
         <activity
             android:name=".UI.Dashboard.Dashboard"
-            android:exported="true">
-
-        </activity>
+            android:exported="true" />
         <activity
             android:name=".MainActivity"
             android:exported="true" />

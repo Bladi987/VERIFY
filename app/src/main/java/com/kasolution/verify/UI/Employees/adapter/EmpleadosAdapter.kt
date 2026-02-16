@@ -1,7 +1,9 @@
 package com.kasolution.verify.UI.Employees.adapter
 
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.Filterable
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
@@ -64,7 +66,9 @@ class EmpleadosAdapter(
             binding.root.setOnClickListener {
                 onClickListener(empleado)
             }
-            binding.root.setOnLongClickListener {
+            binding.root.setOnLongClickListener {view->
+                val imm = view.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(view.windowToken, 0)
                 onLongClickListener(empleado,position)
                 true // Retornamos true para indicar que consumimos el evento
             }

@@ -10,6 +10,7 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import com.kasolution.verify.UI.Clientes.viewModel.ClientesViewModel
 import com.kasolution.verify.UI.Clients.model.Cliente
+import com.kasolution.verify.core.utils.ToastHelper
 import com.kasolution.verify.databinding.FragmentClientFormDialogBinding
 
 
@@ -65,7 +66,7 @@ class ClientFormDialogFragment : DialogFragment() {
         // Escuchar si hay errores específicos al guardar
         viewModel.exception.observe(viewLifecycleOwner) { error ->
             if (error.isNotEmpty()) {
-                Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show()
+                ToastHelper.showCustomToast(binding.root, error, false)
             }
         }
         viewModel.operationSuccess.observe(viewLifecycleOwner) {
@@ -79,10 +80,34 @@ class ClientFormDialogFragment : DialogFragment() {
 
     }
     private fun validar(n: String, d: String, t: String, e: String, di: String): Boolean {
-        if (n.isEmpty() || d.isEmpty() || t.isEmpty() || e.isEmpty() || di.isEmpty()) {
-            Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT).show()
+        binding.run{
+            tilFullName.error = null
+            tilDniRuc.error = null
+            tilTelefono.error = null
+            tilEmail.error=null
+            tilDireccion.error=null
+        }
+        if(n.isBlank()){
+            binding.tilFullName.error = "El nombre es obligatorio"
             return false
         }
+        if(d.isBlank()){
+            binding.tilDniRuc.error = "El DNI/RUC es obligatorio"
+            return false
+        }
+        if(t.isBlank()){
+            binding.tilTelefono.error = "El telefono es obligatorio"
+            return false
+        }
+        if(e.isBlank()){
+            binding.tilEmail.error = "El email es obligatorio"
+            return false
+        }
+        if(di.isBlank()){
+            binding.tilDireccion.error = "La direccion es obligatoria"
+            return false
+        }
+
         return true
     }
 

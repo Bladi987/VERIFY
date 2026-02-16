@@ -6,4 +6,11 @@
     <string name="status_inactive">INACTIVO</string>
     <string name="empty_list_message">Sin datos que mostrar</string>
     <string name="reintentar">Recargar</string>
+    <string name="gestionProvedores">Gestión de Proveedores</string>
+    <string name="BuscarPorNombre">Buscar por nombre</string>
+    <string name="nombreProveedor">Nombre del Proveedor</string>
+    <string name="producto">Producto</string>
+    <string name="guardar_categoria">GUARDAR CATEGORIA</string>
+    <string name="Cancelar">Cancelar</string>
+    <string name="verifyScan">VERIFY SCAN</string>
 </resources>

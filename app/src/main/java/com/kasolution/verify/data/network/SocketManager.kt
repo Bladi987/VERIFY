@@ -157,6 +157,7 @@ class SocketManager private constructor() {
         }
 
         json.append(" }")
+        Log.d(TAG, "Peticion enviado: $json")
         webSocket?.send(json.toString())
     }
 

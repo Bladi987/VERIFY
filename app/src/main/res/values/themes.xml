@@ -1,19 +1,25 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Base.Theme.VERIFY" parent="Theme.Material3.Light.NoActionBar">
+    <style name="Base.Theme.VERIFY" parent="Theme.MaterialComponents.Light.NoActionBar">
         <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
         <item name="colorPrimary">@color/blue_corporative_primary</item>
-        <item name="colorPrimaryVariant">@color/blue_corporative_primary</item>
-        <item name="colorOnPrimary">@color/grey_text_dark</item>
+        <item name="colorPrimaryDark">@color/blue_corporative_primary</item>
+        <item name="colorAccent">@color/blue_corporative_primary</item>
 
         <item name="android:statusBarColor">@color/blue_corporative_primary</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowTranslucentStatus">false</item>
 
-        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
-
-        <item name="android:actionMenuTextColor">@color/grey_text_dark</item>
         <item name="android:textColorPrimary">@color/grey_text_dark</item>
     </style>
 
     <style name="Theme.VERIFY" parent="Base.Theme.VERIFY" />
+
+    <style name="ShapeAppearance.TopRounded" parent="">
+        <item name="cornerSizeTopLeft">24dp</item>
+        <item name="cornerSizeTopRight">24dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+    </style>
 </resources>

@@ -2,15 +2,27 @@ package com.kasolution.verify.core
 
 import android.content.Context
 import com.kasolution.verify.UI.Access.viewModel.LoginViewModelFactory
+import com.kasolution.verify.UI.Category.viewModel.CategoriesViewModelFactory
 import com.kasolution.verify.UI.Clients.viewModel.ClientesViewModelFactory
 import com.kasolution.verify.UI.Dashboard.viewModel.DashboardViewModelFactory
 import com.kasolution.verify.UI.Employees.viewModel.EmpleadosViewModelFactory
+import com.kasolution.verify.UI.Inventory.viewModel.InventoryViewModelFactory
+import com.kasolution.verify.UI.Sales.viewModel.SalesViewModelFactory
+import com.kasolution.verify.UI.Suppliers.viewModel.SuppliersViewModelFactory
 import com.kasolution.verify.data.local.SessionManager
 import com.kasolution.verify.data.local.SettingsManager
 import com.kasolution.verify.data.network.SocketManager
 import com.kasolution.verify.data.repository.AuthRepository
+import com.kasolution.verify.data.repository.CategoriesRepository
 import com.kasolution.verify.data.repository.ClientsRepository
 import com.kasolution.verify.data.repository.EmpleadoRepository
+import com.kasolution.verify.data.repository.InventoryRepository
+import com.kasolution.verify.data.repository.SalesRepository
+import com.kasolution.verify.data.repository.SuppliersRepository
+import com.kasolution.verify.domain.usecases.Categories.DeleteCategoryUseCase
+import com.kasolution.verify.domain.usecases.Categories.GetCategoriesUseCase
+import com.kasolution.verify.domain.usecases.Categories.SaveCategoryUseCase
+import com.kasolution.verify.domain.usecases.Categories.UpdateCategoryUseCase
 import com.kasolution.verify.domain.usecases.Clients.DeleteClientUseCase
 import com.kasolution.verify.domain.usecases.Clients.GetClientsUseCase
 import com.kasolution.verify.domain.usecases.Clients.SaveClientUseCase
@@ -19,7 +31,15 @@ import com.kasolution.verify.domain.usecases.Employees.DeleteEmpleadoUseCase
 import com.kasolution.verify.domain.usecases.Employees.UpdateEmpleadoUseCase
 import com.kasolution.verify.domain.usecases.Employees.GetEmpleadosUseCase
 import com.kasolution.verify.domain.usecases.Employees.SaveEmpleadoUseCase
+import com.kasolution.verify.domain.usecases.Inventory.DeleteProductUseCase
+import com.kasolution.verify.domain.usecases.Inventory.GetProductsUseCase
+import com.kasolution.verify.domain.usecases.Inventory.SaveProductUseCase
+import com.kasolution.verify.domain.usecases.Inventory.UpdateProductUseCase
 import com.kasolution.verify.domain.usecases.Session.LogoutUseCase
+import com.kasolution.verify.domain.usecases.Suppliers.DeleteSupplierUseCase
+import com.kasolution.verify.domain.usecases.Suppliers.GetSuppliersUseCase
+import com.kasolution.verify.domain.usecases.Suppliers.SaveSupplierUseCase
+import com.kasolution.verify.domain.usecases.Suppliers.UpdateSupplierUseCase
 
 object AppProvider {
 
@@ -31,6 +51,13 @@ object AppProvider {
     private var authRepositoryInstance: AuthRepository? = null // <-- AGREGADO
     private var empleadoRepositoryInstance: EmpleadoRepository? = null
     private var clientsRepositoryInstance: ClientsRepository? = null
+    private var suppliersRepositoryInstance: SuppliersRepository? = null
+    private var inventoryRepositoryInstance: InventoryRepository? = null
+    private var categoriesRepositoryInstance: CategoriesRepository? = null
+
+    private var salesRepositoryInstance: SalesRepository? = null
+
+
     private var sessionManagerInstance: SessionManager? = null
 
     /**
@@ -114,6 +141,97 @@ object AppProvider {
             socketManager
         )
     }
+    // --- CATEGORIAS ---
+
+    private fun getCategoriesRepository(): CategoriesRepository {
+        return categoriesRepositoryInstance ?: synchronized(this) {
+            categoriesRepositoryInstance ?: CategoriesRepository(socketManager).also {
+                categoriesRepositoryInstance = it
+            }
+        }
+    }
+
+    fun provideCategoriesViewModelFactory(): CategoriesViewModelFactory {
+        val repo = getCategoriesRepository()
+
+        return CategoriesViewModelFactory(
+            GetCategoriesUseCase(repo),
+            SaveCategoryUseCase(repo),
+            UpdateCategoryUseCase(repo),
+            DeleteCategoryUseCase(repo),
+            socketManager
+        )
+    }
+
+    // --- PROVEEDORES ---
+
+    private fun getSuppliersRepository(): SuppliersRepository {
+        return suppliersRepositoryInstance ?: synchronized(this) {
+            suppliersRepositoryInstance ?: SuppliersRepository(socketManager).also {
+                suppliersRepositoryInstance = it
+            }
+        }
+    }
+
+    fun provideSuppliersViewModelFactory(): SuppliersViewModelFactory {
+        val repo = getSuppliersRepository()
+
+        return SuppliersViewModelFactory(
+            GetSuppliersUseCase(repo),
+            SaveSupplierUseCase(repo),
+            UpdateSupplierUseCase(repo),
+            DeleteSupplierUseCase(repo),
+            socketManager
+        )
+    }
+    // --- INVENTARIO ---
+
+    private fun getInventoryRepository(): InventoryRepository {
+        return inventoryRepositoryInstance ?: synchronized(this) {
+            inventoryRepositoryInstance ?: InventoryRepository(socketManager).also {
+                inventoryRepositoryInstance = it
+            }
+        }
+    }
+
+    fun provideInventoryViewModelFactory(): InventoryViewModelFactory {
+        val repo = getInventoryRepository()
+        val repoSupplier = getSuppliersRepository()
+        val repoCategory = getCategoriesRepository()
+
+        return InventoryViewModelFactory(
+            GetProductsUseCase(repo),
+            SaveProductUseCase(repo),
+            UpdateProductUseCase(repo),
+            DeleteProductUseCase(repo),
+            GetSuppliersUseCase(repoSupplier),
+            GetCategoriesUseCase(repoCategory),
+            SaveCategoryUseCase(repoCategory),
+            socketManager
+        )
+    }
+    // --- VENTAS ---
+
+    private fun getSalesRepository(): SalesRepository {
+        return salesRepositoryInstance ?: synchronized(this) {
+            salesRepositoryInstance ?: SalesRepository(socketManager).also {
+                salesRepositoryInstance = it
+            }
+        }
+    }
+
+    fun provideSalesViewModelFactory(): SalesViewModelFactory {
+        val repoInventory = getInventoryRepository()
+        val repoClient = getClientsRepository()
+
+
+        return SalesViewModelFactory(
+            GetProductsUseCase(repoInventory),
+            GetClientsUseCase(repoClient),
+            socketManager
+        )
+    }
+
 
     // --- DASHBOARD ---
 
@@ -133,7 +251,10 @@ object AppProvider {
             onLogout = { clearAllInstances() }
         )
 
-        return DashboardViewModelFactory(sessionManager = sessionManager, logoutUseCase = logoutUseCase)
+        return DashboardViewModelFactory(
+            sessionManager = sessionManager,
+            logoutUseCase = logoutUseCase
+        )
     }
 
     /**

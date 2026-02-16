@@ -13,4 +13,7 @@
         <attr name="orbitRadius" format="dimension" />
         <attr name="dotCount" format="integer" />
     </declare-styleable>
+    <declare-styleable name="ScannerOverlayView">
+        <attr name="scanner_frame_color" format="color" />
+    </declare-styleable>
 </resources>

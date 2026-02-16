@@ -7,11 +7,14 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import com.kasolution.verify.R
 import com.kasolution.verify.UI.Access.LoginActivity
+import com.kasolution.verify.UI.Category.CategoriesActivity
 import com.kasolution.verify.UI.Clients.ClientsActivity
 import com.kasolution.verify.UI.Dashboard.View.adapter.gridMenuAdapter
 import com.kasolution.verify.UI.Dashboard.View.model.itemGridMenu
 import com.kasolution.verify.UI.Dashboard.viewModel.DashboardViewModel
 import com.kasolution.verify.UI.Employees.EmployeesActivity
+import com.kasolution.verify.UI.Inventory.InventoryActivity
+import com.kasolution.verify.UI.Sales.SalesActivity
 import com.kasolution.verify.UI.Settings.SettingsActivity
 import com.kasolution.verify.UI.Suppliers.SuppliersActivity
 import com.kasolution.verify.core.AppProvider
@@ -63,6 +66,7 @@ class Dashboard : AppCompatActivity() {
         arrayList.add(itemGridMenu(R.drawable.ic_module_reportes, "Reportes"))
         arrayList.add(itemGridMenu(R.drawable.ic_module_caja, "Caja"))
         arrayList.add(itemGridMenu(R.drawable.ic_module_usuarios, "Usuarios"))
+        arrayList.add(itemGridMenu(R.drawable.ic_module_categoria, "Categorias"))
         arrayList.add(itemGridMenu(R.drawable.ic_module_ajustes, "Configuración"))
         return arrayList
     }
@@ -85,10 +89,14 @@ class Dashboard : AppCompatActivity() {
         when (itemGridMenu.name) {
             "Ventas" -> {
                 // Lógica para la opción de Ventas
+                val intent = Intent(this, SalesActivity::class.java)
+                startActivity(intent)
             }
 
             "Inventario" -> {
                 // Lógica para la opción de Inventario
+                val intent = Intent(this, InventoryActivity::class.java)
+                startActivity(intent)
             }
 
             "Clientes" -> {
@@ -113,6 +121,10 @@ class Dashboard : AppCompatActivity() {
 
             "Usuarios" -> {
                 val intent = Intent(this, EmployeesActivity::class.java)
+                startActivity(intent)
+            }
+            "Categorias" -> {
+                val intent = Intent(this, CategoriesActivity::class.java)
                 startActivity(intent)
             }
 

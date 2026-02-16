@@ -176,6 +176,7 @@ object DialogHelper {
                         binding.etIp.error = "IP no valida"
                     } else {
                         dialog.dismiss()
+                        settings.saveConfig(ip, port)
                         onConfigSaved()
                     }
                 }

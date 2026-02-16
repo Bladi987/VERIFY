@@ -1,24 +1,35 @@
 package com.kasolution.verify.UI.Clients
 
+import android.content.Context
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.view.View
+import android.view.WindowManager
+import android.view.animation.AnimationUtils
 import android.view.animation.DecelerateInterpolator
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.snackbar.Snackbar
+import com.kasolution.verify.R
 import com.kasolution.verify.UI.Clientes.viewModel.ClientesViewModel
 import com.kasolution.verify.UI.Clients.adapter.ClientesAdapter
 import com.kasolution.verify.UI.Clients.fragment.ClientFormDialogFragment
 import com.kasolution.verify.UI.Clients.model.Cliente
 import com.kasolution.verify.core.AppProvider
+import com.kasolution.verify.core.utils.DialogHelper
+import com.kasolution.verify.core.utils.ProgressHelper
+import com.kasolution.verify.core.utils.ToastHelper
 import com.kasolution.verify.databinding.ActivityClientsBinding
 import kotlin.getValue
 
@@ -28,6 +39,7 @@ class ClientsActivity : AppCompatActivity() {
     private lateinit var adapter: ClientesAdapter
     private lateinit var lista: ArrayList<Cliente>
     private var selectedClient: Cliente? = null
+    private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
     private val viewModel: ClientesViewModel by viewModels {
         AppProvider.provideClientsViewModelFactory()
     }
@@ -36,8 +48,21 @@ class ClientsActivity : AppCompatActivity() {
         binding = ActivityClientsBinding.inflate(layoutInflater)
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
+
+        bottomSheetBehavior = BottomSheetBehavior.from(binding.layoutOptions)
+        bottomSheetBehavior.apply {
+            isHideable = true
+            skipCollapsed = true
+            state = BottomSheetBehavior.STATE_HIDDEN // Inicia oculto
+        }
+        setSupportActionBar(binding.actionBar)
+        supportActionBar?.apply {
+            setDisplayHomeAsUpEnabled(true)
+            setDisplayShowHomeEnabled(true)
+        }
         lista = ArrayList()
         initRecycler()
+        initBottonSheet()
         setupObservers()
         viewModel.loadClientes()
 
@@ -51,7 +76,7 @@ class ClientsActivity : AppCompatActivity() {
 
             override fun afterTextChanged(s: Editable?) {}
         })
-        binding.fabAddClient.setOnClickListener {
+        binding.btnAddClient.setOnClickListener {
             // 1. Instanciamos el fragmento
             val dialogFragment = ClientFormDialogFragment()
             // El "ClienteTag" es solo una etiqueta para identificar al fragmento en memoria
@@ -68,28 +93,32 @@ class ClientsActivity : AppCompatActivity() {
         }
 
         binding.btnDeleteOption.setOnClickListener {
-            selectedClient?.let { emp ->
-                AlertDialog.Builder(this)
-                    .setTitle("Eliminar Cuenta")
-                    .setMessage("¿Estás seguro de que deseas eliminar a ${emp.nombre}?")
-                    .setPositiveButton("Eliminar") { _, _ ->
-                        viewModel.deleteCliente(emp.id)
+            selectedClient?.let { cli ->
+                DialogHelper.showConfirmation(
+                    this,
+                    "Eliminar Cuenta",
+                    "¿Estás seguro de que deseas eliminar a ${cli.nombre}?",
+                    onConfirm = {
+                        viewModel.deleteCliente(cli.id)
                         hideOptions()
-                    }
-                    .setNegativeButton("Cancelar", null)
-                    .show()
+                    })
             }
         }
-        binding.btnCloseOptions.setOnClickListener {
-            hideOptions()
+        binding.btnRetry.setOnClickListener {
+            viewModel.loadClientes()
+        }
+
+        binding.btnSearch.setOnClickListener {
+            alternarTitulo()
         }
     }
+
     private fun initRecycler() {
         lmanager = LinearLayoutManager(this)
         adapter = ClientesAdapter(
             listaInicial = lista,
             onClickListener = { cliente -> onItemClicListener(cliente) },
-            onLongClickListener = { cliente,position -> showOptionsFor(cliente, position) },
+            onLongClickListener = { cliente, position -> showOptionsFor(cliente, position) },
             onDataChanged = { isEmpty -> toggleEmptyState(isEmpty) }
         )
         binding.rvClients.layoutManager = lmanager
@@ -97,68 +126,62 @@ class ClientsActivity : AppCompatActivity() {
 
         adapter.onDataChanged(lista.isEmpty())
     }
+    private fun initBottonSheet() {
+        bottomSheetBehavior.addBottomSheetCallback(object :
+            BottomSheetBehavior.BottomSheetCallback() {
+            override fun onStateChanged(bottomSheet: View, newState: Int) {
+                if (newState == BottomSheetBehavior.STATE_HIDDEN) {
+                    // Aquí puedes realizar acciones cuando el usuario termine de deslizarlo hacia abajo
+                    adapter.clearSelection()
+                }
+            }
 
+            override fun onSlide(bottomSheet: View, slideOffset: Float) {
+                // Opcional: puedes cambiar la opacidad de un fondo oscuro aquí
+            }
+        })
+    }
     private fun onItemClicListener(cliente: Cliente) {
         //Toast.makeText(this, "${cliente.nombre} - ${cliente.usuario}", Toast.LENGTH_SHORT).show()
         hideOptions()
     }
-    private fun showOptionsFor(cliente: Cliente,position: Int) {
+
+    private fun showOptionsFor(cliente: Cliente, position: Int) {
+        binding.etSearch.clearFocus()
         selectedClient = cliente
         binding.tvSelectedName.text = cliente.nombre
         adapter.setSelectedItem(position)
 
-        if (binding.layoutOptions.visibility == View.GONE) {
-            // 1. Lo hacemos "invisible" pero que ocupe espacio para que Android calcule su altura
-            binding.layoutOptions.alpha = 0f
+        if (binding.layoutOptions.visibility != View.VISIBLE) {
             binding.layoutOptions.visibility = View.VISIBLE
+        }
 
-            binding.layoutOptions.post {
-                val height = binding.layoutOptions.height.toFloat()
-
-                // 2. Lo movemos abajo y le devolvemos la opacidad ANTES de que el usuario lo vea
-                binding.layoutOptions.translationY = height
-                binding.layoutOptions.alpha = 1f
-
-                // 3. Ejecutamos la animación limpia
-                binding.layoutOptions.animate()
-                    .translationY(0f)
-                    .setDuration(300)
-                    .setInterpolator(DecelerateInterpolator())
-                    .start()
-            }
+        // En lugar de usar .animate(), usamos los estados del Behavior
+        if (bottomSheetBehavior.state != BottomSheetBehavior.STATE_EXPANDED) {
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
         } else {
-            // Si ya es visible (cambio de selección), solo actualizamos el nombre con una pequeña vibración
-            binding.tvSelectedName.animate().scaleX(1.05f).scaleY(1.05f).setDuration(100).withEndAction {
-                binding.tvSelectedName.animate().scaleX(1f).scaleY(1f).start()
-            }.start()
+            // Animación sutil de feedback si ya estaba abierto (cambio de empleado)
+            binding.tvSelectedName.animate().scaleX(1.1f).scaleY(1.1f).setDuration(100)
+                .withEndAction {
+                    binding.tvSelectedName.animate().scaleX(1f).scaleY(1f).start()
+                }.start()
         }
     }
 
     private fun hideOptions() {
         adapter.clearSelection()
-        binding.layoutOptions.animate()
-            .translationY(binding.layoutOptions.height.toFloat())
-            .setDuration(300)
-            .withEndAction {
-                binding.layoutOptions.visibility = View.GONE
-                selectedClient = null
-            }
-            .start()
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
     }
 
     private fun setupObservers() {
         viewModel.clientesList.observe(this) { lista ->
-            // El Observer solo entrega la data.
-            // El adaptador internamente dirá "estoy vacío" o "tengo datos"
-            Log.d("ClientsActivity", lista.toString())
+            val emptyList = lista.isNullOrEmpty()
+            mostrarMensajeOrLista(true, emptyList)
             adapter.updateList(lista ?: emptyList())
         }
         viewModel.exception.observe(this) { error ->
-            // Manejar el error según tus necesidades
-            Snackbar.make(binding.root, error, Snackbar.LENGTH_INDEFINITE)
-                .setAction("CERRAR") { } // Botón para descartar
-                .setBackgroundTint(ContextCompat.getColor(this, android.R.color.holo_red_light))
-                .show()
+            mostrarMensajeOrLista(exito = false, mensaje = error)
+            ToastHelper.showCustomToast(binding.root, error, false)
         }
         viewModel.operationSuccess.observe(this) { action ->
             if (action.isNullOrEmpty()) return@observe
@@ -168,22 +191,81 @@ class ClientsActivity : AppCompatActivity() {
                 "CLIENTE_DELETE" -> "Cliente eliminado"
                 else -> ""
             }
-
-            Snackbar.make(binding.root, mensaje, Snackbar.LENGTH_LONG)
-                .setBackgroundTint(ContextCompat.getColor(this, android.R.color.holo_green_light))
-                .show()
+            ToastHelper.showCustomToast(binding.root, mensaje, true)
             binding.root.postDelayed({
                 viewModel.resetOperationStatus()
             }, 100)
         }
 
         viewModel.isLoading.observe(this) { loading ->
-            binding.progressBar.isVisible = loading
+            ProgressHelper.showProgress(this, "Cargando...")
+            if (!loading) ProgressHelper.hideProgress()
         }
     }
 
+    fun mostrarMensajeOrLista(
+        exito: Boolean,
+        lista: Boolean = false,
+        mensaje: String = "Sin datos que mostrar"
+    ) {
+        if (exito) {
+            //la peticion fue exitosa, ahora validamos si la lista esta vacio
+            if (lista) {
+                //si la lista esta vacio mostramos el mensaje
+                binding.rvClients.isVisible = false
+                binding.layoutMessage.isVisible = true
+                binding.tvTitleMeassage.text = mensaje
+                binding.btnRetry.isVisible = false
+                binding.btnAddClient.isEnabled = true
+                binding.btnSearch.isEnabled = true
+            } else {
+                //mostramos el recyclerView
+                binding.rvClients.isVisible = true
+                binding.layoutMessage.isVisible = false
+                binding.btnAddClient.isEnabled = true
+                binding.btnSearch.isEnabled = true
+            }
+        } else {
+            //mostramos mensaje ya sea sin datos o error
+            binding.rvClients.isVisible = false
+            binding.layoutMessage.isVisible = true
+            binding.tvTitleMeassage.text = mensaje
+            binding.btnRetry.isVisible = true
+            binding.btnAddClient.isEnabled = false
+            binding.btnSearch.isEnabled = false
+        }
+    }
+    fun alternarTitulo() {
+        val animInLeft = AnimationUtils.loadAnimation(this, R.anim.slide_in_top)
+        val animOutLeft = AnimationUtils.loadAnimation(this, R.anim.slide_out_top)
+        val animInRight = AnimationUtils.loadAnimation(this, R.anim.slide_in_bottom)
+        val animOutRight = AnimationUtils.loadAnimation(this, R.anim.slide_out_bottom)
+        if (binding.etSearch.visibility == View.VISIBLE) {
+            binding.etSearch.startAnimation(animOutRight)
+            binding.ivSearch.setImageResource(R.drawable.ic_search)
+            binding.etSearch.text?.clear()
+            binding.etSearch.visibility = View.GONE
+            binding.tvTitle.visibility = View.VISIBLE
+            binding.tvTitle.startAnimation(animInLeft)
+        } else {
+            binding.tvTitle.startAnimation(animOutLeft)
+            binding.tvTitle.visibility = View.GONE
+            binding.etSearch.startAnimation(animInRight)
+            binding.etSearch.visibility = View.VISIBLE
+            binding.ivSearch.setImageResource(R.drawable.ic_close)
+            binding.etSearch.requestFocus()
+            val inputMethodManager =
+                this.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            inputMethodManager.showSoftInput(binding.etSearch, InputMethodManager.SHOW_IMPLICIT)
+        }
+    }
     private fun toggleEmptyState(isEmpty: Boolean) {
         binding.rvClients.isVisible = !isEmpty
-        binding.tvEmptyState.isVisible = isEmpty
+//        binding.tvEmptyState.isVisible = isEmpty
+    }
+    override fun onSupportNavigateUp(): Boolean {
+        // Esto simula presionar el botón físico/virtual de "atrás" del teléfono
+        onBackPressedDispatcher.onBackPressed()
+        return true
     }
 }
