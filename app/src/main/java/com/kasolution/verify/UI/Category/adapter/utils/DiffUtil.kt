@@ -1,7 +1,7 @@
 package com.kasolution.verify.UI.Category.adapter.utils
 
 import androidx.recyclerview.widget.DiffUtil
-import com.kasolution.verify.UI.Category.model.Category
+import com.kasolution.verify.domain.Inventory.model.Category
 
 class CategoriesDiffCallback(
     private val oldList: List<Category>,

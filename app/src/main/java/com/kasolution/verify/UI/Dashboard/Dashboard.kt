@@ -14,7 +14,8 @@ import com.kasolution.verify.UI.Dashboard.View.model.itemGridMenu
 import com.kasolution.verify.UI.Dashboard.viewModel.DashboardViewModel
 import com.kasolution.verify.UI.Employees.EmployeesActivity
 import com.kasolution.verify.UI.Inventory.InventoryActivity
-import com.kasolution.verify.UI.Sales.SalesActivity
+import com.kasolution.verify.UI.Sales.CurrentSale.SalesActivity
+import com.kasolution.verify.UI.Sales.History.HistoryActivity
 import com.kasolution.verify.UI.Settings.SettingsActivity
 import com.kasolution.verify.UI.Suppliers.SuppliersActivity
 import com.kasolution.verify.core.AppProvider
@@ -63,6 +64,7 @@ class Dashboard : AppCompatActivity() {
         arrayList.add(itemGridMenu(R.drawable.ic_module_inventario, "Inventario"))
         arrayList.add(itemGridMenu(R.drawable.ic_module_clientes, "Clientes"))
         arrayList.add(itemGridMenu(R.drawable.ic_module_proveedores, "Proveedores"))
+        arrayList.add(itemGridMenu(R.drawable.ic_module_history_sales, "Historial de Ventas"))
         arrayList.add(itemGridMenu(R.drawable.ic_module_reportes, "Reportes"))
         arrayList.add(itemGridMenu(R.drawable.ic_module_caja, "Caja"))
         arrayList.add(itemGridMenu(R.drawable.ic_module_usuarios, "Usuarios"))
@@ -108,6 +110,11 @@ class Dashboard : AppCompatActivity() {
             "Proveedores" -> {
                 // Lógica para la opción de Proveedores
                 val intent = Intent(this, SuppliersActivity::class.java)
+                startActivity(intent)
+            }
+            "Historial de Ventas" -> {
+                // Lógica para la opción de Historial de Ventas
+                val intent = Intent(this, HistoryActivity::class.java)
                 startActivity(intent)
             }
 

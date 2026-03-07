@@ -1,7 +1,7 @@
 package com.kasolution.verify.UI.Suppliers.adapter.utils
 
 import androidx.recyclerview.widget.DiffUtil
-import com.kasolution.verify.UI.Suppliers.model.Supplier
+import com.kasolution.verify.domain.supplier.model.Supplier
 
 
 class SupplierDiffCallback(

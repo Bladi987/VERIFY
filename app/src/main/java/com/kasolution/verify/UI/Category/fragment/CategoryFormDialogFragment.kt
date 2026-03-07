@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
-import com.kasolution.verify.UI.Category.model.Category
+import com.kasolution.verify.domain.Inventory.model.Category
 import com.kasolution.verify.UI.Category.viewModel.CategoriesViewModel
 import com.kasolution.verify.core.utils.ToastHelper
 import com.kasolution.verify.databinding.LayoutAddCategorySheetBinding
@@ -30,7 +30,7 @@ class CategoryFormDialogFragment : DialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val category = arguments?.getSerializable(ARG_CATEGORY) as? Category
+        val category = arguments?.getParcelable<Category>(ARG_CATEGORY)
         if (category != null) {
             //MODO EDICION
             binding.tvDialogTitle.text = "Editar Categoria"
@@ -42,14 +42,17 @@ class CategoryFormDialogFragment : DialogFragment() {
 
         }
         binding.btnGuardarCategoria.setOnClickListener {
-            val id = if (category?.id != null) category.id else 0
+            val id = category?.id ?: 0
             val nombre = binding.etNombreCat.text.toString().trim()
             val descripcion = binding.etDescCat.text.toString().trim()
             val isActive = binding.swIsActive.isChecked
+
             if (validar(nombre)) {
-                if (nombre != null) {
-                    viewModel.updateCategory(id, nombre, descripcion, true)
+                if (id > 0) {
+                    // Si el ID existe, estamos editando
+                    viewModel.updateCategory(id, nombre, descripcion, isActive)
                 } else {
+                    // Si el ID es 0, es nueva categoría
                     viewModel.saveCategory(nombre, descripcion, isActive)
                 }
             }
@@ -108,7 +111,7 @@ class CategoryFormDialogFragment : DialogFragment() {
             val fragment = CategoryFormDialogFragment()
             category?.let {
                 val args = Bundle()
-                args.putSerializable(ARG_CATEGORY, it)
+                args.putParcelable(ARG_CATEGORY, it)
                 fragment.arguments = args
             }
             return fragment

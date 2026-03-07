@@ -1,6 +1,5 @@
 package com.kasolution.verify.UI.Inventory.fragment
 
-import android.R.attr.action
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -12,20 +11,16 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.AutoCompleteTextView
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import com.google.android.material.textfield.TextInputEditText
-import com.kasolution.verify.UI.Category.model.Category
-import com.kasolution.verify.UI.Clients.fragment.ClientFormDialogFragment
-import com.kasolution.verify.UI.Clients.model.Cliente
+import com.kasolution.verify.domain.Inventory.model.Category
 import com.kasolution.verify.UI.Components.Scanner.ScannerActivity
 import com.kasolution.verify.UI.Inventory.adapter.GenericDropDownAdapter
-import com.kasolution.verify.UI.Inventory.model.Product
+import com.kasolution.verify.domain.Inventory.model.Product
 import com.kasolution.verify.UI.Inventory.viewModel.InventoryViewModel
-import com.kasolution.verify.UI.Suppliers.model.Supplier
+import com.kasolution.verify.domain.supplier.model.Supplier
 import com.kasolution.verify.core.utils.ToastHelper
 import com.kasolution.verify.databinding.FragmentProductFormDialogBinding
 
@@ -49,9 +44,8 @@ class ProductFormDialogFragment : DialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel.loadSuppliers()
-        viewModel.loadCategories()
-        val product = arguments?.getSerializable(ARG_PRODUCT) as? Product
+
+        val product = arguments?.getParcelable<Product>(ARG_PRODUCT)
         setupCurrencyFormatting(binding.etPrecioCompra)
         setupCurrencyFormatting(binding.etPrecioVenta)
         if (product != null) {
@@ -183,28 +177,21 @@ class ProductFormDialogFragment : DialogFragment() {
             }
         }
         viewModel.operationSuccess.observe(viewLifecycleOwner) { accion ->
-//            if (it.isNotEmpty()) { // Verificamos que no sea el valor reseteado
-//                dismiss()
-//            }
             if (accion.isNullOrEmpty()) return@observe
 
             when (accion) {
                 "CATEGORY_SAVE" -> {
-                    // 2. Cerrar SOLO el BottomSheet si está abierto
                     addCategorySheet?.dismiss()
                     addCategorySheet = null
+                    viewModel.resetOperationStatus() // Limpiar para que no afecte al diálogo padre
+                }
+                "PRODUCT_SAVE", "PRODUCT_UPDATE" -> {
+                    // Toast de éxito antes de cerrar
+                    ToastHelper.showCustomToast(binding.root, "Producto guardado con éxito", true)
+
+                    // Limpiamos el estado ANTES de cerrar para que la siguiente vez que se abra esté limpio
                     viewModel.resetOperationStatus()
-                }
-                "PRODUCT_SAVE" -> {
-                    binding.root.postDelayed({
-                        viewModel.resetOperationStatus()
-                    }, 100)
-                }
-                "PRODUCT_UPDATE" -> {
                     dismiss()
-                    binding.root.postDelayed({
-                        viewModel.resetOperationStatus()
-                    }, 100)
                 }
             }
         }
@@ -360,7 +347,7 @@ class ProductFormDialogFragment : DialogFragment() {
             val fragment = ProductFormDialogFragment()
             product?.let {
                 val args = Bundle()
-                args.putSerializable(ARG_PRODUCT, it)
+                args.putParcelable(ARG_PRODUCT, it)
                 fragment.arguments = args
             }
             return fragment

@@ -6,7 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Filter
-import com.kasolution.verify.UI.Inventory.model.Product
+import com.kasolution.verify.domain.Inventory.model.Product
 import com.kasolution.verify.databinding.ItemSearchSuggestionBinding
 
 class SearchProductAdapter(context: Context, private val fullList: List<Product>) :

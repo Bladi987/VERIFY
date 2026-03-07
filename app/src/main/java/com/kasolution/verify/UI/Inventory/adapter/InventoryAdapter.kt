@@ -14,7 +14,7 @@ import android.widget.Filter
 import androidx.core.graphics.drawable.toDrawable
 import androidx.recyclerview.widget.DiffUtil
 import com.kasolution.verify.UI.Inventory.adapter.utils.InventoryDiffCallback
-import com.kasolution.verify.UI.Inventory.model.Product
+import com.kasolution.verify.domain.Inventory.model.Product
 import com.kasolution.verify.databinding.ProductsListItemBinding
 
 

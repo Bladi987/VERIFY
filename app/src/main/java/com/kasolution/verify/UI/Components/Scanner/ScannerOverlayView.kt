@@ -54,29 +54,33 @@ class ScannerOverlayView @JvmOverloads constructor(
     }
 
     private fun startLaserAnimation() {
-        // Calculamos el recorrido del láser basado en el 35% del alto total de la vista
+        laserAnimator?.cancel() // Cancelar anterior si existe
+
+        // Si la altura es 0 aún, no iniciamos
+        if (height <= 0) return
+
         val totalFrameHeight = height * 0.35f
 
         laserAnimator = ValueAnimator.ofFloat(0f, totalFrameHeight).apply {
-            duration = 2000 // 2 segundos por barrido
+            duration = 2000
             interpolator = LinearInterpolator()
             repeatCount = ValueAnimator.INFINITE
             repeatMode = ValueAnimator.REVERSE
             addUpdateListener {
                 laserYOffset = it.animatedValue as Float
-                invalidate() // Redibujar para mostrar el movimiento del láser
+                // IMPORTANTE: Esto es lo que mantiene viva la vista
+                invalidate()
             }
             start()
         }
     }
-    fun flashSuccessColor() {
-        // Cambiar color a verde
-        framePaint.color = colorExito
-        invalidate() // Forzar redibujado
+    fun flashResultColor(isSuccess: Boolean) {
+        val originalColor = colorAzul
+        framePaint.color = if (isSuccess) colorExito else Color.RED
+        invalidate()
 
-        // Regresar al azul después de 500ms
         postDelayed({
-            framePaint.color = colorAzul
+            framePaint.color = originalColor
             invalidate()
         }, 500)
     }
@@ -85,7 +89,13 @@ class ScannerOverlayView @JvmOverloads constructor(
         super.onDetachedFromWindow()
     }
 
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        // Reiniciar animación cuando el tamaño cambie o se estabilice
+        startLaserAnimation()
+    }
     override fun onDraw(canvas: Canvas) {
+        if (width == 0 || height == 0) return
         super.onDraw(canvas)
 
         // --- CÁLCULO DE DIMENSIONES DEL VISOR ---

@@ -4,9 +4,9 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.kasolution.verify.UI.Category.model.Category
-import com.kasolution.verify.UI.Inventory.model.Product
-import com.kasolution.verify.UI.Suppliers.model.Supplier
+import com.kasolution.verify.domain.Inventory.model.Category
+import com.kasolution.verify.domain.Inventory.model.Product
+import com.kasolution.verify.domain.supplier.model.Supplier
 import com.kasolution.verify.data.network.SocketManager
 import com.kasolution.verify.domain.usecases.Categories.GetCategoriesUseCase
 import com.kasolution.verify.domain.usecases.Categories.SaveCategoryUseCase
@@ -33,10 +33,13 @@ class InventoryViewModel(
 
     private val _productsList = MutableLiveData<List<Product>>()
     val productsList: LiveData<List<Product>> get() = _productsList
+
     private val _suppliersList = MutableLiveData<List<Supplier>>()
     val suppliersList: LiveData<List<Supplier>> get() = _suppliersList
+
     private val _categoriesList = MutableLiveData<List<Category>>()
     val categoryList: LiveData<List<Category>> get() = _categoriesList
+
     private val _isLoading = MutableLiveData(false)
     val isLoading: LiveData<Boolean> get() = _isLoading
 
@@ -46,16 +49,24 @@ class InventoryViewModel(
     val operationSuccess: LiveData<String> get() = _operationSuccess
 
     init {
+        // 1. REACTIVACIÓN DE TODOS LOS REPOSITORIOS INVOLUCRADOS
+        getProductsUseCase.repository.registerObserver()
+        getSuppliersUseCase.repository.registerObserver()
+        getCategoriesUseCase.repository.registerObserver()
+
         setupRepositoryObservers()
 
         socketManager.onConnected = {
-            Log.d(TAG, "Socket conectado (Inventory)")
-            getProductsUseCase.repository.onSocketReconnected()
+            Log.d(TAG, "Socket conectado (Inventory) -> Recargando todo")
+            loadProducts()
+            loadCategories()
+            loadSuppliers()
         }
 
         if (socketManager.isConnected) {
             loadProducts()
             loadCategories()
+            loadSuppliers() // Añadido para consistencia inicial
         }
     }
 
@@ -63,7 +74,6 @@ class InventoryViewModel(
         val repo = getProductsUseCase.repository
         val supplierRepo = getSuppliersUseCase.repository
         val categoriesRepo = getCategoriesUseCase.repository
-
 
         repo.onInventoryListReceived = { lista ->
             Log.d(TAG, "Cantidad de Productos recibidos: ${lista.size}")
@@ -73,13 +83,12 @@ class InventoryViewModel(
 
         supplierRepo.onSuppliersListReceived = { lista ->
             Log.d(TAG, "Cantidad de Proveedores recibidos: ${lista.size}")
-            // Exponemos la lista a la View (Activity)
             _suppliersList.postValue(lista)
             _isLoading.postValue(false)
         }
+
         categoriesRepo.onCategoriesListReceived = { lista ->
             Log.d(TAG, "Cantidad de categorias recibidos: ${lista.size}")
-            // Exponemos la lista a la View (Activity)
             _categoriesList.postValue(lista)
             _isLoading.postValue(false)
         }
@@ -93,8 +102,11 @@ class InventoryViewModel(
                         _operationSuccess.postValue(accion)
                         currentRequestId = null
                     }
-                    loadProducts()
-                    //if (accion == "CATEGORY_SAVE") loadSuppliers()  //analizar bien si se utilizara en este contexto
+                    // Dependiendo de qué se guardó, refrescamos la lista correspondiente
+                    when(accion) {
+                        "PRODUCT_SAVE", "PRODUCT_UPDATE", "PRODUCT_DELETE" -> loadProducts()
+                        "CATEGORY_SAVE" -> loadCategories()
+                    }
                 } else {
                     if (requestIdRecibido == currentRequestId) {
                         exception.postValue("Error en operación Inventory: $accion")
@@ -103,6 +115,7 @@ class InventoryViewModel(
                 }
             }
 
+        // Suscribimos el handler a todos los repositorios para capturar éxitos/errores
         repo.onOperationResult = resultHandler
         supplierRepo.onOperationResult = resultHandler
         categoriesRepo.onOperationResult = resultHandler
@@ -112,97 +125,55 @@ class InventoryViewModel(
         deleteProductUseCase.repository.onOperationResult = resultHandler
     }
 
+    /* --- MÉTODOS DE CARGA --- */
+
     fun loadProducts() {
-        _isLoading.postValue(true)
         if (socketManager.isConnected) {
+            _isLoading.postValue(true)
             getProductsUseCase()
         } else {
             exception.postValue("Servidor desconectado")
-            _isLoading.postValue(false)
         }
     }
+
     fun loadSuppliers(){
-        _isLoading.postValue(true)
         if (socketManager.isConnected) {
+            _isLoading.postValue(true)
             getSuppliersUseCase()
-        } else {
-            exception.postValue("Servidor desconectado")
-            _isLoading.postValue(false)
         }
     }
+
     fun loadCategories(){
-        _isLoading.postValue(true)
         if (socketManager.isConnected) {
+            _isLoading.postValue(true)
             getCategoriesUseCase()
-        } else {
-            exception.postValue("Servidor desconectado")
-            _isLoading.postValue(false)
         }
     }
+
+    /* --- OPERACIONES --- */
+
     fun saveCategory(nombre: String, descripcion: String){
         _isLoading.postValue(true)
         currentRequestId = UUID.randomUUID().toString()
-        val category = Category(
-            id = 0,
-            nombre = nombre,
-            descripcion =descripcion
-        )
+        val category = Category(id = 0, nombre = nombre, descripcion = descripcion, estado = true)
         saveCategoryUseCase(category, currentRequestId!!)
     }
 
-    fun saveProduct(
-        codigo: String,
-        nombre: String,
-        idCategoria: Int,
-        idProveedor: Int,
-        precioCompra: Double,
-        precioVenta: Double,
-        stock: Int,
-        unidadMedida: String,
-        estado: Boolean
-    ) {
+    fun saveProduct(codigo: String, nombre: String, idCategoria: Int, idProveedor: Int,
+                    precioCompra: Double, precioVenta: Double, stock: Int, unidadMedida: String, estado: Boolean) {
         _isLoading.postValue(true)
         currentRequestId = UUID.randomUUID().toString()
-        val product = Product(
-            id = 0,
-            codigo = codigo,
-            nombre = nombre,
-            idCategoria = idCategoria,
-            idProveedor = idProveedor,
-            precioCompra = precioCompra,
-            precioVenta = precioVenta,
-            stock = stock,
-            unidadMedida = unidadMedida,
-            estado = estado
-        )
+        val product = Product(0, codigo, nombre, idCategoria, null, idProveedor, null,
+            precioCompra, precioVenta, stock, unidadMedida, estado)
         saveProductUseCase(product, currentRequestId!!)
     }
 
-    fun updateProduct(
-        id: Int,
-        codigo: String,
-        nombre: String,
-        idCategoria: Int,
-        idProveedor: Int,
-        precioCompra: Double,
-        precioVenta: Double,
-        stock: Int,
-        unidadMedida: String,
-        estado: Boolean
-    ) {
+    fun updateProduct(id: Int, codigo: String, nombre: String, idCategoria: Int, idProveedor: Int,
+                      precioCompra: Double, precioVenta: Double, stock: Int, unidadMedida: String, estado: Boolean) {
         _isLoading.postValue(true)
         currentRequestId = UUID.randomUUID().toString()
-        val product = Product(
-            id = id, codigo = codigo,
-            nombre = nombre,
-            idCategoria = idCategoria,
-            idProveedor = idProveedor,
-            precioCompra = precioCompra,
-            precioVenta = precioVenta,
-            stock = stock,
-            unidadMedida = unidadMedida,
-            estado = estado
-        )
+        val product = Product(id, codigo, nombre, idCategoria, null, idProveedor, null,
+            precioCompra, precioVenta, stock, unidadMedida, estado)
         updateProductUseCase(product, currentRequestId!!)
     }
 
@@ -216,8 +187,13 @@ class InventoryViewModel(
         _operationSuccess.value = ""
         _isLoading.value = false
     }
+
     override fun onCleared() {
         super.onCleared()
-        Log.d(TAG, "InventoryViewModel destruido")
+        Log.d(TAG, "InventoryViewModel destruido - Limpiando 3 repositorios")
+        // 2. LIMPIEZA ABSOLUTA DE LOS 3 OBSERVADORES
+        getProductsUseCase.repository.clear()
+        getSuppliersUseCase.repository.clear()
+        getCategoriesUseCase.repository.clear()
     }
 }

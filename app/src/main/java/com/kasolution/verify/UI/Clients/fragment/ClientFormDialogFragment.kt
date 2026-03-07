@@ -5,11 +5,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import com.kasolution.verify.UI.Clientes.viewModel.ClientesViewModel
-import com.kasolution.verify.UI.Clients.model.Cliente
+import com.kasolution.verify.domain.clients.model.Client
 import com.kasolution.verify.core.utils.ToastHelper
 import com.kasolution.verify.databinding.FragmentClientFormDialogBinding
 
@@ -32,7 +31,7 @@ class ClientFormDialogFragment : DialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val cli = arguments?.getSerializable(ARG_CLIENT) as? Cliente
+        val cli = arguments?.getParcelable<Client>(ARG_CLIENT)
 
         if (cli != null) {
             //MODO EDICION
@@ -132,11 +131,11 @@ class ClientFormDialogFragment : DialogFragment() {
     companion object {
         private const val ARG_CLIENT = "client_data"
 
-        fun newInstance(cliente: Cliente?): ClientFormDialogFragment {
+        fun newInstance(cliente: Client?): ClientFormDialogFragment {
             val fragment = ClientFormDialogFragment()
             cliente?.let {
                 val args = Bundle()
-                args.putSerializable(ARG_CLIENT, it)
+                args.putParcelable(ARG_CLIENT, it)
                 fragment.arguments = args
             }
             return fragment

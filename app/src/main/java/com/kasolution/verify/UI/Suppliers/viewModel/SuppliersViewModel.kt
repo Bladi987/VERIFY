@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.kasolution.verify.UI.Suppliers.model.Supplier
+import com.kasolution.verify.domain.supplier.model.Supplier
 import com.kasolution.verify.data.network.SocketManager
 import com.kasolution.verify.domain.usecases.Suppliers.DeleteSupplierUseCase
 import com.kasolution.verify.domain.usecases.Suppliers.GetSuppliersUseCase
@@ -35,13 +35,19 @@ class SuppliersViewModel(
     val operationSuccess: LiveData<String> get() = _operationSuccess
 
     init {
+        // 1. Reactivamos el registro del repositorio en el SocketManager
+        getSuppliersUseCase.repository.registerObserver()
+
+        // 2. Vinculamos los listeners del repositorio con los LiveData
         setupRepositoryObservers()
 
+        // 3. Gestión de reconexión del Socket
         socketManager.onConnected = {
-            Log.d(TAG, "Socket conectado (Suppliers)")
-            getSuppliersUseCase.repository.onSocketReconnected()
+            Log.d(TAG, "Socket reconectado (Proveedores) -> Actualizando lista")
+            loadSuppliers(force = true)
         }
 
+        // 4. Carga inicial si hay conexión
         if (socketManager.isConnected) {
             loadSuppliers()
         }
@@ -51,14 +57,13 @@ class SuppliersViewModel(
         val repo = getSuppliersUseCase.repository
 
         repo.onSuppliersListReceived = { lista ->
-            Log.d(TAG, "Suppliers recibidos: ${lista.size}")
+            Log.d(TAG, "Proveedores recibidos en VM: ${lista.size}")
             _suppliersList.postValue(lista)
             _isLoading.postValue(false)
         }
 
         val resultHandler: (String, Boolean, String?) -> Unit =
             { accion, exito, requestIdRecibido ->
-
                 _isLoading.postValue(false)
 
                 if (exito) {
@@ -66,22 +71,27 @@ class SuppliersViewModel(
                         _operationSuccess.postValue(accion)
                         currentRequestId = null
                     }
-                    loadSuppliers()
+                    // Refrescar lista automáticamente tras éxito
+                    loadSuppliers(force = true)
                 } else {
                     if (requestIdRecibido == currentRequestId) {
-                        exception.postValue("Error en operación Suppliers: $accion")
+                        exception.postValue("Error en operación Proveedores: $accion")
                         currentRequestId = null
                     }
                 }
             }
 
+        // Sincronizamos todos los casos de uso con el manejador de resultados
         repo.onOperationResult = resultHandler
         saveSupplierUseCase.repository.onOperationResult = resultHandler
         updateSupplierUseCase.repository.onOperationResult = resultHandler
         deleteSupplierUseCase.repository.onOperationResult = resultHandler
     }
 
-    fun loadSuppliers() {
+    fun loadSuppliers(force: Boolean = false) {
+        // Evitamos peticiones dobles si ya hay una en curso (a menos que se fuerce)
+        if (_isLoading.value == true && !force) return
+
         _isLoading.postValue(true)
         if (socketManager.isConnected) {
             getSuppliersUseCase()
@@ -129,6 +139,8 @@ class SuppliersViewModel(
 
     override fun onCleared() {
         super.onCleared()
-        Log.d(TAG, "SuppliersViewModel destruido")
+        Log.d(TAG, "Limpiando SuppliersViewModel y desvinculando observador")
+        // 5. CRÍTICO: Damos de baja el observador para evitar Memory Leaks
+        getSuppliersUseCase.repository.clear()
     }
 }

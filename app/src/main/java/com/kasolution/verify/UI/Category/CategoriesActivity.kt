@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.View
 import android.view.animation.AnimationUtils
 import android.view.inputmethod.InputMethodManager
@@ -15,7 +16,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.kasolution.verify.R
 import com.kasolution.verify.UI.Category.adapter.CategoriesAdapter
 import com.kasolution.verify.UI.Category.fragment.CategoryFormDialogFragment
-import com.kasolution.verify.UI.Category.model.Category
+import com.kasolution.verify.domain.Inventory.model.Category
 import com.kasolution.verify.UI.Category.viewModel.CategoriesViewModel
 import com.kasolution.verify.core.AppProvider
 import com.kasolution.verify.core.utils.DialogHelper
@@ -54,7 +55,7 @@ class CategoriesActivity : AppCompatActivity() {
         initRecycler()
         initBottonSheet()
         setupObservers()
-        viewModel.loadCategories()
+//        viewModel.loadCategories()
 
         binding.etSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -83,13 +84,14 @@ class CategoriesActivity : AppCompatActivity() {
         }
 
         binding.btnDeleteOption.setOnClickListener {
-            selectedCategory?.let { cli ->
+            selectedCategory?.let { category ->
                 DialogHelper.showConfirmation(
                     this,
                     "Eliminar Categoria",
-                    "¿Estás seguro de que deseas eliminar ${cli.nombre}?",
+                    "¿Estás seguro de que deseas eliminar ${category.nombre}?",
                     onConfirm = {
-                        viewModel.deleteCategory(cli.id)
+                        Log.d("CategoriesActivity", "Eliminando categoria: ${category}")
+                        viewModel.deleteCategory(category.id)
                         hideOptions()
                     })
             }
@@ -131,6 +133,7 @@ class CategoriesActivity : AppCompatActivity() {
         })
     }
     private fun onItemClicListener(category: Category) {
+        Log.d("CategoriesActivity", "Categoria seleccionada: ${category.id}")
         //Toast.makeText(this, "${category.nombre} - ${category.usuario}", Toast.LENGTH_SHORT).show()
         hideOptions()
     }

@@ -1,74 +1,87 @@
 package com.kasolution.verify.data.repository
 
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import com.google.gson.Gson
+import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
-import com.kasolution.verify.UI.Clients.model.Cliente
+import com.kasolution.verify.data.mapper.toDomain
+import com.kasolution.verify.domain.clients.model.Client
 import com.kasolution.verify.data.model.SocketResponse
 import com.kasolution.verify.data.network.SocketManager
-import org.json.JSONObject
+import com.kasolution.verify.data.remote.dto.ClientDto
 
-class ClientsRepository(private val socketManager: SocketManager){
+class ClientsRepository(private val socketManager: SocketManager) {
 
     private val TAG = "ClientsRepository"
     private val gson = Gson()
 
-    var onClientsListReceived: ((List<Cliente>) -> Unit)? = null
+    // Callbacks para el ViewModel
+    var onClientsListReceived: ((List<Client>) -> Unit)? = null
     var onOperationResult: ((String, Boolean, String?) -> Unit)? = null
 
     init {
+        registerObserver()
+    }
+
+    fun registerObserver() {
+        socketManager.removeObserver(TAG)
         socketManager.addObserver(TAG) { json ->
             try {
-                val jsonObject = JSONObject(json)
-                val action = jsonObject.optString("action")
-                val status = jsonObject.optString("status") == "success"
-                val requestId = jsonObject.optString("request_id", null)
+                val element = JsonParser.parseString(json)
+                if (!element.isJsonObject) return@addObserver
+                val jsonObject = element.asJsonObject
 
-                Log.d(TAG, "Repo interceptó acción: $action")
+                // Lectura segura de la acción para evitar JsonNull
+                val action = if (jsonObject.has("action") && !jsonObject.get("action").isJsonNull) {
+                    jsonObject.get("action").asString
+                } else ""
 
                 when (action) {
-
                     "CLIENTE_GET_ALL" -> {
-                        val type =
-                            object : TypeToken<SocketResponse<List<Cliente>>>() {}.type
-                        val response: SocketResponse<List<Cliente>> =
-                            gson.fromJson(json, type)
+                        val type = object : TypeToken<SocketResponse<List<ClientDto>>>() {}.type
+                        val response: SocketResponse<List<ClientDto>> = gson.fromJson(json, type)
 
-                        val lista = response.data ?: emptyList()
+                        // Mapeo seguro de DTO a Dominio
+                        val listaDomain = response.data?.map { it.toDomain() } ?: emptyList()
 
-                        if (onClientsListReceived == null) {
-                            Log.e(
-                                TAG,
-                                "onClientsListReceived es NULL (ViewModel no suscrito aún)"
-                            )
+                        Log.d(TAG, "Clientes mapeados con éxito: ${listaDomain.size}")
+
+                        // Respuesta siempre en el hilo principal
+                        Handler(Looper.getMainLooper()).post {
+                            onClientsListReceived?.invoke(listaDomain)
                         }
-
-                        onClientsListReceived?.invoke(lista)
                     }
 
-                    "CLIENTE_SAVE",
-                    "CLIENTE_UPDATE",
-                    "CLIENTE_DELETE" -> {
+                    "CLIENTE_SAVE", "CLIENTE_UPDATE", "CLIENTE_DELETE" -> {
+                        val status = jsonObject.get("status")?.asString == "success"
+                        val requestId = if (jsonObject.has("request_id") && !jsonObject.get("request_id").isJsonNull) {
+                            jsonObject.get("request_id").asString
+                        } else null
+
                         Log.d(TAG, "Resultado $action → success=$status requestId=$requestId")
-                        onOperationResult?.invoke(action, status, requestId)
+
+                        Handler(Looper.getMainLooper()).post {
+                            onOperationResult?.invoke(action, status, requestId)
+                        }
                     }
                 }
-
             } catch (e: Exception) {
-                Log.e(TAG, "Error procesando mensaje socket: ${e.message}", e)
+                Log.e(TAG, "Error crítico procesando mensaje en $TAG: ${e.message}")
             }
         }
     }
 
     /* ============================
-       PETICIONES
+       PETICIONES AL SERVIDOR
        ============================ */
 
     fun getClients() {
         socketManager.sendAction("CLIENTE_GET_ALL")
     }
 
-    fun saveClient(cliente: Cliente, requestId: String) {
+    fun saveClient(cliente: Client, requestId: String) {
         val params = mapOf(
             "nombre" to cliente.nombre,
             "dni_ruc" to cliente.dniRuc,
@@ -79,9 +92,9 @@ class ClientsRepository(private val socketManager: SocketManager){
         socketManager.sendAction("CLIENTE_SAVE", params, requestId)
     }
 
-    fun updateClient(cliente: Cliente, requestId: String) {
+    fun updateClient(cliente: Client, requestId: String) {
         val params = mapOf(
-            "id_cliente" to cliente.id.toString(),
+            "id_cliente" to cliente.id,
             "nombre" to cliente.nombre,
             "dni_ruc" to cliente.dniRuc,
             "telefono" to cliente.telefono,
@@ -94,26 +107,28 @@ class ClientsRepository(private val socketManager: SocketManager){
     fun deleteClient(id: Int, requestId: String) {
         socketManager.sendAction(
             "CLIENTE_DELETE",
-            mapOf("id_cliente" to id.toString()),
+            mapOf("id_cliente" to id),
             requestId
         )
     }
 
     /* ============================
-       RECONEXIÓN
+       GESTIÓN DE ESTADO Y LIMPIEZA
        ============================ */
 
+    /**
+     * Función vital para recuperar datos automáticamente tras una caída de red
+     */
     fun onSocketReconnected() {
-        Log.d(TAG, "Socket reconectado → solicitando CLIENTE_GET_ALL")
+        Log.d(TAG, "Socket reconectado → Solicitando actualización de clientes")
         getClients()
     }
 
-    /* ============================
-       LIMPIEZA (NO USAR EN onCleared)
-       ============================ */
-
+    /**
+     * Limpia observadores y callbacks para evitar fugas de memoria (Memory Leaks)
+     */
     fun clear() {
-        Log.d(TAG, "Cerrando ClientsRepository y removiendo observer")
+        Log.d(TAG, "Cerrando ClientsRepository y removiendo observer de SocketManager")
         socketManager.removeObserver(TAG)
         onClientsListReceived = null
         onOperationResult = null

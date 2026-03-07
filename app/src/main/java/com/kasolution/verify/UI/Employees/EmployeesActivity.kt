@@ -7,20 +7,16 @@ import android.text.TextWatcher
 import android.util.Log
 import android.view.View
 import android.view.animation.AnimationUtils
-import android.view.animation.DecelerateInterpolator
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.viewModels
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.snackbar.Snackbar
 import com.kasolution.verify.R
 import com.kasolution.verify.UI.Employees.adapter.EmpleadosAdapter
 import com.kasolution.verify.UI.Employees.fragment.EmpleadosFormDialogFragment
-import com.kasolution.verify.UI.Employees.model.Empleado
+import com.kasolution.verify.domain.employees.model.Employee
 import com.kasolution.verify.UI.Employees.viewModel.EmpleadosViewModel
 import com.kasolution.verify.core.AppProvider
 import com.kasolution.verify.core.utils.DialogHelper
@@ -32,8 +28,8 @@ class EmployeesActivity : AppCompatActivity() {
     private val TAG = "EmpleadosActivity"
     private lateinit var lmanager: LinearLayoutManager
     private lateinit var adapter: EmpleadosAdapter
-    private lateinit var lista: ArrayList<Empleado>
-    private var selectedEmpleado: Empleado? = null
+    private lateinit var lista: ArrayList<Employee>
+    private var selectedEmpleado: Employee? = null
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
     private lateinit var binding: ActivityEmpleadosBinding
 
@@ -65,7 +61,6 @@ class EmployeesActivity : AppCompatActivity() {
         initRecycler()
         initBottonSheet()
         setupObservers()
-        viewModel.loadEmpleados()
 
         binding.etSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -154,12 +149,12 @@ class EmployeesActivity : AppCompatActivity() {
         })
     }
 
-    private fun onItemClicListener(empleado: Empleado) {
+    private fun onItemClicListener(empleado: Employee) {
         //Toast.makeText(this, "${empleado.nombre} - ${empleado.usuario}", Toast.LENGTH_SHORT).show()
         hideOptions()
     }
 
-    private fun showOptionsFor(empleado: Empleado, position: Int) {
+    private fun showOptionsFor(empleado: Employee, position: Int) {
         binding.etSearch.clearFocus()
         selectedEmpleado = empleado
         binding.tvSelectedName.text = empleado.nombre

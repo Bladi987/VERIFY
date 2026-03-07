@@ -1,6 +1,6 @@
 package com.kasolution.verify.domain.usecases.Categories
 
-import com.kasolution.verify.UI.Category.model.Category
+import com.kasolution.verify.domain.Inventory.model.Category
 import com.kasolution.verify.data.repository.CategoriesRepository
 
 class UpdateCategoryUseCase(val repository: CategoriesRepository) {

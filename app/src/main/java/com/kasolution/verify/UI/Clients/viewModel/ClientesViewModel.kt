@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.kasolution.verify.UI.Clients.model.Cliente
+import com.kasolution.verify.domain.clients.model.Client
 import com.kasolution.verify.data.network.SocketManager
 import com.kasolution.verify.domain.usecases.Clients.DeleteClientUseCase
 import com.kasolution.verify.domain.usecases.Clients.GetClientsUseCase
@@ -23,8 +23,8 @@ class ClientesViewModel(
     private val TAG = "ClientesViewModel"
     private var currentRequestId: String? = null
 
-    private val _clientesList = MutableLiveData<List<Cliente>>()
-    val clientesList: LiveData<List<Cliente>> get() = _clientesList
+    private val _clientesList = MutableLiveData<List<Client>>()
+    val clientesList: LiveData<List<Client>> get() = _clientesList
 
     private val _isLoading = MutableLiveData(false)
     val isLoading: LiveData<Boolean> get() = _isLoading
@@ -35,13 +35,21 @@ class ClientesViewModel(
     val operationSuccess: LiveData<String> get() = _operationSuccess
 
     init {
+        // 1. IMPORTANTE: Registramos el observador en el repositorio nada más empezar
+        // Esto soluciona el problema de que no cargue al entrar por segunda vez.
+        getClientesUseCase.repository.registerObserver()
+
+        // 2. Vinculamos los callbacks del repositorio con nuestros LiveData
         setupRepositoryObservers()
 
+        // 3. Manejo de reconexión del socket
         socketManager.onConnected = {
-            Log.d(TAG, "Socket conectado (Clientes)")
-            getClientesUseCase.repository.onSocketReconnected()
+            Log.d(TAG, "Socket reconectado (Clientes) -> Recargando...")
+            loadClientes()
         }
 
+        // 4. Carga inicial: Solo si ya está conectado.
+        // Nota: Recuerda quitar viewModel.loadClientes() del onCreate de la Activity.
         if (socketManager.isConnected) {
             loadClientes()
         }
@@ -51,14 +59,14 @@ class ClientesViewModel(
         val repo = getClientesUseCase.repository
 
         repo.onClientsListReceived = { lista ->
-            Log.d(TAG, "Clientes recibidos: ${lista.size}")
+            Log.d(TAG, "Clientes recibidos en VM: ${lista.size}")
             _clientesList.postValue(lista)
             _isLoading.postValue(false)
         }
 
         val resultHandler: (String, Boolean, String?) -> Unit =
             { accion, exito, requestIdRecibido ->
-
+                // Nota: Ya no necesitamos Handler aquí porque el repo ya responde en Main Thread
                 _isLoading.postValue(false)
 
                 if (exito) {
@@ -75,6 +83,7 @@ class ClientesViewModel(
                 }
             }
 
+        // Asignamos el mismo manejador de resultados a todos los casos de uso (comparten repositorio)
         repo.onOperationResult = resultHandler
         saveClienteUseCase.repository.onOperationResult = resultHandler
         updateClienteUseCase.repository.onOperationResult = resultHandler
@@ -82,6 +91,9 @@ class ClientesViewModel(
     }
 
     fun loadClientes() {
+        // Evitamos peticiones dobles si ya está cargando
+        if (_isLoading.value == true) return
+
         _isLoading.postValue(true)
         if (socketManager.isConnected) {
             getClientesUseCase()
@@ -100,7 +112,7 @@ class ClientesViewModel(
     ) {
         _isLoading.postValue(true)
         currentRequestId = UUID.randomUUID().toString()
-        val cliente = Cliente(0, nombre, dniRuc, telefono, email, direccion)
+        val cliente = Client(0, nombre, dniRuc, telefono, email, direccion)
         saveClienteUseCase(cliente, currentRequestId!!)
     }
 
@@ -114,7 +126,7 @@ class ClientesViewModel(
     ) {
         _isLoading.postValue(true)
         currentRequestId = UUID.randomUUID().toString()
-        val cliente = Cliente(id, nombre, dniRuc, telefono, email, direccion)
+        val cliente = Client(id, nombre, dniRuc, telefono, email, direccion)
         updateClienteUseCase(cliente, currentRequestId!!)
     }
 
@@ -131,6 +143,8 @@ class ClientesViewModel(
 
     override fun onCleared() {
         super.onCleared()
-        Log.d(TAG, "ClientesViewModel destruido")
+        Log.d(TAG, "Limpiando ClientesViewModel y desvinculando observador")
+        // 5. CRÍTICO: Damos de baja el observador en el socket para evitar Memory Leaks
+        getClientesUseCase.repository.clear()
     }
 }

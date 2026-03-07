@@ -1,14 +1,18 @@
 package com.kasolution.verify.data.repository
 
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import com.google.gson.Gson
+import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
-import com.kasolution.verify.UI.Suppliers.model.Supplier
+import com.kasolution.verify.data.mapper.toDomain
+import com.kasolution.verify.domain.supplier.model.Supplier
 import com.kasolution.verify.data.model.SocketResponse
 import com.kasolution.verify.data.network.SocketManager
-import org.json.JSONObject
+import com.kasolution.verify.data.remote.dto.SupplierDto
 
-class SuppliersRepository(private val socketManager: SocketManager){
+class SuppliersRepository(private val socketManager: SocketManager) {
 
     private val TAG = "SuppliersRepository"
     private val gson = Gson()
@@ -17,51 +21,69 @@ class SuppliersRepository(private val socketManager: SocketManager){
     var onOperationResult: ((String, Boolean, String?) -> Unit)? = null
 
     init {
+        registerObserver()
+    }
+
+    /**
+     * Registra el repositorio en el SocketManager.
+     * Se llama en el init y también desde el ViewModel para reactivar la escucha.
+     */
+    fun registerObserver() {
+        Log.d(TAG, "Registrando observer de SuppliersRepository")
+        socketManager.removeObserver(TAG)
+
         socketManager.addObserver(TAG) { json ->
             try {
-                val jsonObject = JSONObject(json)
-                val action = jsonObject.optString("action")
-                val status = jsonObject.optString("status") == "success"
-                val requestId = jsonObject.optString("request_id", null)
+                // 1. Parseo defensivo (Background thread)
+                val element = JsonParser.parseString(json)
+                if (!element.isJsonObject) return@addObserver
+                val jsonObject = element.asJsonObject
 
-                Log.d(TAG, "Repo interceptó acción: $action")
+                // Lectura segura de la acción
+                val action = if (jsonObject.has("action") && !jsonObject.get("action").isJsonNull) {
+                    jsonObject.get("action").asString
+                } else ""
 
                 when (action) {
-
                     "SUPPLIER_GET_ALL" -> {
-                        val type =
-                            object : TypeToken<SocketResponse<List<Supplier>>>() {}.type
-                        val response: SocketResponse<List<Supplier>> =
-                            gson.fromJson(json, type)
+                        val type = object : TypeToken<SocketResponse<List<SupplierDto>>>() {}.type
+                        val response: SocketResponse<List<SupplierDto>> = gson.fromJson(json, type)
 
-                        val lista = response.data ?: emptyList()
+                        // Mapeo seguro de DTO a Dominio
+                        val listaDomain = response.data?.map { it.toDomain() } ?: emptyList()
 
-                        if (onSuppliersListReceived == null) {
-                            Log.e(
-                                TAG,
-                                "onSuppliersListReceived es NULL (ViewModel no suscrito aún)"
-                            )
+                        Log.d(TAG, "Proveedores mapeados con éxito: ${listaDomain.size}")
+
+                        // 2. Respuesta siempre en el hilo principal
+                        Handler(Looper.getMainLooper()).post {
+                            onSuppliersListReceived?.invoke(listaDomain)
                         }
-
-                        onSuppliersListReceived?.invoke(lista)
                     }
 
-                    "SUPPLIER_SAVE",
-                    "SUPPLIER_UPDATE",
-                    "SUPPLIER_DELETE" -> {
+                    "SUPPLIER_SAVE", "SUPPLIER_UPDATE", "SUPPLIER_DELETE" -> {
+                        val status = if (jsonObject.has("status")) {
+                            jsonObject.get("status").asString == "success"
+                        } else false
+
+                        val requestId = if (jsonObject.has("request_id") && !jsonObject.get("request_id").isJsonNull) {
+                            jsonObject.get("request_id").asString
+                        } else null
+
                         Log.d(TAG, "Resultado $action → success=$status requestId=$requestId")
-                        onOperationResult?.invoke(action, status, requestId)
+
+                        Handler(Looper.getMainLooper()).post {
+                            onOperationResult?.invoke(action, status, requestId)
+                        }
                     }
                 }
-
             } catch (e: Exception) {
-                Log.e(TAG, "Error procesando mensaje socket: ${e.message}", e)
+                Log.e(TAG, "Error procesando mensaje en $TAG: ${e.message}")
             }
         }
     }
 
     /* ============================
-       PETICIONES
+       PETICIONES AL SERVIDOR
        ============================ */
 
     fun getSuppliers() {
@@ -80,7 +102,7 @@ class SuppliersRepository(private val socketManager: SocketManager){
 
     fun updateSupplier(supplier: Supplier, requestId: String) {
         val params = mapOf(
-            "id_proveedor" to supplier.id.toString(),
+            "id_proveedor" to supplier.id, // Enviamos el Int directamente
             "nombre" to supplier.nombre,
             "telefono" to supplier.telefono,
             "email" to supplier.email,
@@ -92,23 +114,20 @@ class SuppliersRepository(private val socketManager: SocketManager){
     fun deleteSupplier(id: Int, requestId: String) {
         socketManager.sendAction(
             "SUPPLIER_DELETE",
-            mapOf("id_proveedor" to id.toString()),
+            mapOf("id_proveedor" to id),
             requestId
         )
     }
 
     /* ============================
-       RECONEXIÓN
+       RECONEXIÓN Y LIMPIEZA
        ============================ */
 
     fun onSocketReconnected() {
-        Log.d(TAG, "Socket reconectado → solicitando SUPPLIER_GET_ALL")
+        Log.d(TAG, "Socket reconectado → Refrescando proveedores")
+        registerObserver()
         getSuppliers()
     }
-
-    /* ============================
-       LIMPIEZA (NO USAR EN onCleared)
-       ============================ */
 
     fun clear() {
         Log.d(TAG, "Cerrando SuppliersRepository y removiendo observer")

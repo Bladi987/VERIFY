@@ -1,6 +1,6 @@
 package com.kasolution.verify.domain.usecases.Suppliers
 
-import com.kasolution.verify.UI.Suppliers.model.Supplier
+import com.kasolution.verify.domain.supplier.model.Supplier
 import com.kasolution.verify.data.repository.SuppliersRepository
 
 

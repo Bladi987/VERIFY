@@ -1,90 +1,152 @@
 package com.kasolution.verify.data.repository
 
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import com.google.gson.Gson
+import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
-import com.kasolution.verify.UI.Clients.model.Cliente
-import com.kasolution.verify.data.model.SocketResponse
 import com.kasolution.verify.data.network.SocketManager
-import org.json.JSONObject
 
-class SalesRepository(private val socketManager: SocketManager){
+class SalesRepository(private val socketManager: SocketManager) {
 
-    private val TAG = "ClientsRepository"
+    private val TAG = "SalesRepository"
     private val gson = Gson()
 
-    var onClientsListReceived: ((List<Cliente>) -> Unit)? = null
+    // Callbacks para la UI
     var onOperationResult: ((String, Boolean, String?) -> Unit)? = null
+    var onSalesHistoryReceived: ((List<Map<String, Any>>) -> Unit)? = null
+    var onSaleDetailReceived: ((List<Map<String, Any>>) -> Unit)? = null
+    var onInvoiceDataReceived: ((String) -> Unit)? = null // Callback para el paquete completo
+    var lastGeneratedId: Int? = null
 
     init {
+        registerObserver()
+    }
+
+    fun registerObserver() {
+        Log.d(TAG, "Registrando observer de SalesRepository")
+        socketManager.removeObserver(TAG)
+
         socketManager.addObserver(TAG) { json ->
             try {
-                val jsonObject = JSONObject(json)
-                val action = jsonObject.optString("action")
-                val status = jsonObject.optString("status") == "success"
-                val requestId = jsonObject.optString("request_id", null)
+                val element = JsonParser.parseString(json)
+                if (!element.isJsonObject) return@addObserver
+                val jsonObject = element.asJsonObject
 
-                Log.d(TAG, "Repo interceptó acción: $action")
+                val action = if (jsonObject.has("action") && !jsonObject.get("action").isJsonNull) {
+                    jsonObject.get("action").asString
+                } else ""
+
+                val status = if (jsonObject.has("status")) {
+                    jsonObject.get("status").asString == "success"
+                } else false
+
+                val requestId = if (jsonObject.has("request_id") && !jsonObject.get("request_id").isJsonNull) {
+                    jsonObject.get("request_id").asString
+                } else null
 
                 when (action) {
+                    // Implementación unificada para comprobantes dinámicos
+                    "SALE_SAVE", "SALE_GET_DETAIL" -> {
+                        Log.d(TAG, "Procesando comprobante: $action -> exito: $status")
 
-                    "CLIENTE_GET_ALL" -> {
-                        val type =
-                            object : TypeToken<SocketResponse<List<Cliente>>>() {}.type
-                        val response: SocketResponse<List<Cliente>> =
-                            gson.fromJson(json, type)
+                        if (status && jsonObject.has("data")) {
+                            // Extraemos el objeto "data" (contiene business, header e items)
+                            val dataJson = jsonObject.get("data").toString()
 
-                        val lista = response.data ?: emptyList()
+                            Handler(Looper.getMainLooper()).post {
+                                // 1. Notificamos al ViewModel el objeto completo del comprobante
+                                onInvoiceDataReceived?.invoke(dataJson)
 
-                        if (onClientsListReceived == null) {
-                            Log.e(
-                                TAG,
-                                "onClientsListReceived es NULL (ViewModel no suscrito aún)"
-                            )
+                                // 2. Notificamos el resultado de la operación para lógica de UI (limpiar carrito, etc)
+                                onOperationResult?.invoke(action, status, requestId)
+                            }
+                        } else {
+                            // Si hay error, notificamos solo el resultado
+                            Handler(Looper.getMainLooper()).post {
+                                onOperationResult?.invoke(action, status, requestId)
+                            }
                         }
-
-                        onClientsListReceived?.invoke(lista)
                     }
 
-                    "CLIENTE_SAVE",
-                    "CLIENTE_UPDATE",
-                    "CLIENTE_DELETE" -> {
-                        Log.d(TAG, "Resultado $action → success=$status requestId=$requestId")
-                        onOperationResult?.invoke(action, status, requestId)
+                    "SALE_DELETE" -> {
+                        Log.d(TAG, "Anulación procesada: $action -> exito: $status")
+                        Handler(Looper.getMainLooper()).post {
+                            onOperationResult?.invoke(action, status, requestId)
+                        }
+                    }
+
+                    "SALE_GET_ALL" -> {
+                        val type = object : TypeToken<Map<String, Any>>() {}.type
+                        val response: Map<String, Any> = gson.fromJson(json, type)
+                        val data = response["data"] as? List<Map<String, Any>> ?: emptyList()
+
+                        Handler(Looper.getMainLooper()).post {
+                            onSalesHistoryReceived?.invoke(data)
+                        }
                     }
                 }
-
             } catch (e: Exception) {
-                Log.e(TAG, "Error procesando mensaje socket: ${e.message}", e)
+                Log.e(TAG, "Error crítico en SalesRepository: ${e.message}")
             }
         }
     }
 
-    /* ============================
-       PETICIONES
-       ============================ */
+    /**
+     * Procesa el registro de una venta completa.
+     */
+    fun saveSale(
+        idCliente: Int?,
+        idEmpleado: Int,
+        total: Double,
+        metodoPago: String,
+        idTipoComprobante: Int, // CAMBIO: De String a Int para coincidir con la DB
+        detalles: List<Map<String, Any>>,
+        requestId: String
+    ) {
+        val params = mutableMapOf<String, Any>(
+            "id_cliente" to (idCliente ?: 0),
+            "id_empleado" to idEmpleado,
+            "total" to total,
+            "metodo_pago" to metodoPago.uppercase(),
+            "id_tipo_comprobante" to idTipoComprobante, // CAMBIO: Nombre de llave exacto para el PHP
+            "detalles" to detalles
+        )
 
-    fun getClients() {
-        socketManager.sendAction("CLIENTE_GET_ALL")
+        Log.d(TAG, "Enviando Venta al Socket: $params")
+        socketManager.sendAction("SALE_SAVE", params, requestId)
     }
 
-    /* ============================
-       RECONEXIÓN
-       ============================ */
+    fun getSalesHistory() {
+        socketManager.sendAction("SALE_GET_ALL")
+    }
+
+    /**
+     * Solicita los datos completos del comprobante (incluye config empresa)
+     */
+    fun getSaleDetail(idVenta: Int) {
+        socketManager.sendAction("SALE_GET_DETAIL", mapOf("id_venta" to idVenta))
+    }
+
+    fun deleteSale(idVenta: Int, requestId: String) {
+        socketManager.sendAction(
+            "SALE_DELETE",
+            mapOf("id_venta" to idVenta),
+            requestId
+        )
+    }
 
     fun onSocketReconnected() {
-        Log.d(TAG, "Socket reconectado → solicitando CLIENTE_GET_ALL")
-        getClients()
+        registerObserver()
     }
 
-    /* ============================
-       LIMPIEZA (NO USAR EN onCleared)
-       ============================ */
-
     fun clear() {
-        Log.d(TAG, "Cerrando ClientsRepository y removiendo observer")
+        Log.d(TAG, "Limpiando SalesRepository")
         socketManager.removeObserver(TAG)
-        onClientsListReceived = null
         onOperationResult = null
+        onSalesHistoryReceived = null
+        onSaleDetailReceived = null
+        onInvoiceDataReceived = null
     }
 }

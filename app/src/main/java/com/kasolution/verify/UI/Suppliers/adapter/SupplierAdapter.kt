@@ -12,7 +12,7 @@ import android.widget.Filter
 import androidx.core.graphics.drawable.toDrawable
 import androidx.recyclerview.widget.DiffUtil
 import com.kasolution.verify.UI.Suppliers.adapter.utils.SupplierDiffCallback
-import com.kasolution.verify.UI.Suppliers.model.Supplier
+import com.kasolution.verify.domain.supplier.model.Supplier
 import com.kasolution.verify.databinding.SupplierListItemBinding
 
 class SupplierAdapter(

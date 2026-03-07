@@ -6,7 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
-import com.kasolution.verify.UI.Suppliers.model.Supplier
+import com.kasolution.verify.domain.supplier.model.Supplier
 import com.kasolution.verify.UI.Suppliers.viewModel.SuppliersViewModel
 import com.kasolution.verify.core.utils.ToastHelper
 import com.kasolution.verify.databinding.FragmentSuppliersFormDialogBinding
@@ -29,7 +29,7 @@ class SuppliersFormDialogFragment : DialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val proveedor = arguments?.getSerializable(ARG_SUPPLIER) as? Supplier
+        val proveedor = arguments?.getParcelable<Supplier>(ARG_SUPPLIER)
         if (proveedor != null) {
             //MODO EDICION
             binding.tvDialogTitle.text = "Editar Proveedor"
@@ -122,7 +122,7 @@ class SuppliersFormDialogFragment : DialogFragment() {
             val fragment = SuppliersFormDialogFragment()
             supplier?.let {
                 val args = Bundle()
-                args.putSerializable(ARG_SUPPLIER, it)
+                args.putParcelable(ARG_SUPPLIER, it)
                 fragment.arguments = args
             }
             return fragment

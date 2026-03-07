@@ -6,6 +6,7 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.graphics.drawable.ColorDrawable
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.animation.AnimationUtils
@@ -161,6 +162,8 @@ object DialogHelper {
             binding.btnConfirm.isEnabled = false
             binding.btnConfirm.text = "Probando..."
             val testUrl = "ws://$ip:$port"
+            Log.d("ConfigDialog", "URL de prueba: $testUrl")
+
 
             // 3. Prueba de conexión real a través del SocketManager
             // Usamos una instancia temporal o un método de prueba en SocketManager

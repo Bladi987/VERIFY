@@ -12,25 +12,25 @@ import android.widget.Filter
 import androidx.core.graphics.drawable.toDrawable
 import androidx.recyclerview.widget.DiffUtil
 import com.kasolution.verify.UI.Clients.adapter.utils.ClienteDiffCallback
-import com.kasolution.verify.UI.Clients.model.Cliente
+import com.kasolution.verify.domain.clients.model.Client
 import com.kasolution.verify.databinding.ClientesListItemBinding
 
 class ClientesAdapter(
-    private val listaInicial: ArrayList<Cliente>,
-    private val onClickListener: (Cliente) -> Unit,
-    private val onLongClickListener: (Cliente, Int) -> Unit,
+    private val listaInicial: ArrayList<Client>,
+    private val onClickListener: (Client) -> Unit,
+    private val onLongClickListener: (Client, Int) -> Unit,
     val onDataChanged: (isEmpty: Boolean) -> Unit
 ) : RecyclerView.Adapter<ClientesAdapter.ViewHolder>(), Filterable {
 
     private var selectedPosition: Int = -1
-    private var clientesFullList: List<Cliente> = listaInicial.toList()
-    private var clientesDisplayedList: MutableList<Cliente> = listaInicial.toMutableList()
+    private var clientesFullList: List<Client> = listaInicial.toList()
+    private var clientesDisplayedList: MutableList<Client> = listaInicial.toMutableList()
     private val clientesFilter: ClienteFilter = ClienteFilter()
 
     inner class ViewHolder(private val binding: ClientesListItemBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(cliente: Cliente, position: Int) {
+        fun bind(cliente: Client, position: Int) {
             // 1. Asignar Datos (Basado en tu tabla SQL)
             binding.tvNombre.text = cliente.nombre
             binding.tvDniRuc.text = "DNI/RUC: ${cliente.dniRuc ?: "---"}"
@@ -117,14 +117,14 @@ class ClientesAdapter(
         @Suppress("UNCHECKED_CAST")
         override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
             clientesDisplayedList.clear()
-            clientesDisplayedList.addAll(results?.values as List<Cliente>)
+            clientesDisplayedList.addAll(results?.values as List<Client>)
             notifyDataSetChanged()
             onDataChanged(clientesDisplayedList.isEmpty())
         }
     }
 
     // --- Actualización de Datos ---
-    fun updateList(newList: List<Cliente>) {
+    fun updateList(newList: List<Client>) {
         val diffCallback = ClienteDiffCallback(this.clientesFullList, newList)
         val diffResult = DiffUtil.calculateDiff(diffCallback)
 

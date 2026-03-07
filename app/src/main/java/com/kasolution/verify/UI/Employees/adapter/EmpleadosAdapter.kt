@@ -8,27 +8,27 @@ import android.widget.Filterable
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.kasolution.verify.R
-import com.kasolution.verify.UI.Employees.model.Empleado
+import com.kasolution.verify.domain.employees.model.Employee
 import com.kasolution.verify.databinding.EmpleadosListItemBinding
 import android.widget.Filter
 import androidx.core.graphics.drawable.toDrawable
 
 class EmpleadosAdapter(
-    private val listaInicial: ArrayList<Empleado>,
-    private val onClickListener: (Empleado) -> Unit,
-    private val onLongClickListener: (Empleado, Int) -> Unit,
+    private val listaInicial: ArrayList<Employee>,
+    private val onClickListener: (Employee) -> Unit,
+    private val onLongClickListener: (Employee, Int) -> Unit,
     val onDataChanged: (isEmpty: Boolean) -> Unit
 ) : RecyclerView.Adapter<EmpleadosAdapter.ViewHolder>(), Filterable {
     private var selectedPosition: Int = -1
-    private var empleadosFullList: List<Empleado> = listaInicial.toList()
-    private var empleadosDisplayedList: MutableList<Empleado> = listaInicial.toMutableList()
+    private var empleadosFullList: List<Employee> = listaInicial.toList()
+    private var empleadosDisplayedList: MutableList<Employee> = listaInicial.toMutableList()
     private val empleadosFilter: EmpleadoFilter = EmpleadoFilter()
 
     //    private val onDataChanged: (isEmpty: Boolean) -> Unit
     inner class ViewHolder(private val binding: EmpleadosListItemBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(empleado: Empleado,position: Int) {
+        fun bind(empleado: Employee, position: Int) {
             // 1. Asignar Texto
             binding.tvInitials.text = empleado.initials
             binding.tvEmployeeName.text = empleado.nombre
@@ -139,13 +139,13 @@ class EmpleadosAdapter(
         override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
             // Actualizar la lista mostrada y notificar al RecyclerView
             empleadosDisplayedList.clear()
-            empleadosDisplayedList.addAll(results?.values as List<Empleado>)
+            empleadosDisplayedList.addAll(results?.values as List<Employee>)
             notifyDataSetChanged()
             onDataChanged(empleadosDisplayedList.isEmpty())
         }
     }
 
-    fun updateList(newList: List<Empleado>) {
+    fun updateList(newList: List<Employee>) {
         // Actualizamos ambas listas para que el filtrado siga funcionando
         this.empleadosFullList = newList.toList()
         this.empleadosDisplayedList.clear()

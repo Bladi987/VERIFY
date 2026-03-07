@@ -20,11 +20,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.chip.Chip
 import com.kasolution.verify.R
-import com.kasolution.verify.UI.Category.model.Category
+import com.kasolution.verify.domain.Inventory.model.Category
 import com.kasolution.verify.UI.Components.Scanner.ScannerActivity
 import com.kasolution.verify.UI.Inventory.adapter.InventoryAdapter
 import com.kasolution.verify.UI.Inventory.fragment.ProductFormDialogFragment
-import com.kasolution.verify.UI.Inventory.model.Product
+import com.kasolution.verify.domain.Inventory.model.Product
 import com.kasolution.verify.UI.Inventory.viewModel.InventoryViewModel
 import com.kasolution.verify.core.AppProvider
 import com.kasolution.verify.core.utils.DialogHelper
@@ -68,8 +68,6 @@ class InventoryActivity : AppCompatActivity() {
         initRecycler()
         initBottonSheet()
         setupObservers()
-        viewModel.loadProducts()
-        viewModel.loadCategories()
 
         binding.etBuscar.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}

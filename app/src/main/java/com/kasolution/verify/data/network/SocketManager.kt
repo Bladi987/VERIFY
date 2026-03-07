@@ -3,13 +3,15 @@ package com.kasolution.verify.data.network
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import com.google.gson.Gson
 import com.kasolution.verify.data.local.SessionManager
 import okhttp3.*
 import java.util.concurrent.TimeUnit
 
 class SocketManager private constructor() {
 
-    val TAG = "SocketManager"
+    private val TAG = "SocketManager"
+    private val gson = Gson() // Usaremos Gson para enviar JSONs válidos siempre
 
     private var client: OkHttpClient = OkHttpClient.Builder()
         .pingInterval(30, TimeUnit.SECONDS)
@@ -18,13 +20,11 @@ class SocketManager private constructor() {
 
     private var webSocket: WebSocket? = null
     private var currentUrl: String? = null
-
     private var sessionManager: SessionManager? = null
 
     var isConnected: Boolean = false
         private set
 
-    // Callbacks
     var onConnected: (() -> Unit)? = null
     var onConnectionError: ((String) -> Unit)? = null
 
@@ -33,158 +33,121 @@ class SocketManager private constructor() {
     companion object {
         @Volatile
         private var instance: SocketManager? = null
-
         fun getInstance(): SocketManager =
             instance ?: synchronized(this) {
                 instance ?: SocketManager().also { instance = it }
             }
     }
 
-    // 🔗 Se llama UNA sola vez (por ejemplo en Application o Login)
     fun bindSessionManager(sessionManager: SessionManager) {
         this.sessionManager = sessionManager
     }
 
-    // --- OBSERVADORES ---
     fun addObserver(tag: String, callback: (String) -> Unit) {
-        observers.remove(tag)
         observers[tag] = callback
-        Log.d(TAG, "NUEVO REGISTRO: $tag. Total ahora: ${observers.size}")
     }
 
     fun removeObserver(tag: String) {
         observers.remove(tag)
     }
 
-    fun unregisterConnectionListener() {
-        onConnected = null
-    }
-
-    // --- CONEXIÓN ---
     fun connect(url: String) {
-
-        // 🔐 BONUS: no conectar si no hay sesión
-        if (sessionManager?.isUserLoggedIn() == false) {
-            Log.w(TAG, "Intento de conexión sin sesión activa. Abortando.")
-            return
-        }
+        if (sessionManager?.isUserLoggedIn() == false) return
 
         if (webSocket != null && currentUrl != url) {
-            Log.d(TAG, "Cambio de IP detectado. Cerrando conexión vieja...")
             close()
-        } else if (isConnected) {
-            Log.d(TAG, "Ya conectado a $url")
-            return
-        }
+        } else if (isConnected) return
 
         currentUrl = url
         val request = Request.Builder().url(url).build()
 
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
-
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 isConnected = true
-                Log.d(TAG, "Conectado al servidor Ratchet")
-                Handler(Looper.getMainLooper()).post {
-                    onConnected?.invoke()
-                }
+                Handler(Looper.getMainLooper()).post { onConnected?.invoke() }
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
-                Handler(Looper.getMainLooper()).post {
-                    Log.d(TAG, "Mensaje recibido: $text")
-                    observers.values.forEach { it.invoke(text) }
-                }
+                // IMPORTANTE: El parseo de JSON grandes debe ser fuera del hilo principal
+                // pero como tus repositorios usan postValue, esto está bien por ahora.
+                Log.d(TAG, "Mensaje recibido (Longitud: ${text.length})")
+
+                // Si el mensaje es muy largo, Log.d lo corta en la consola,
+                // pero la variable 'text' está completa.
+
+                observers.values.forEach { it.invoke(text) }
             }
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                 isConnected = false
                 this@SocketManager.webSocket = null
-                Log.e(TAG, "Error de conexión: ${t.message}")
-
                 Handler(Looper.getMainLooper()).post {
-                    onConnectionError?.invoke(t.message ?: "Error desconocido")
+                    onConnectionError?.invoke(t.message ?: "Error de conexión")
                 }
-
                 retryConnection()
-            }
-
-            override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-                isConnected = false
-                this@SocketManager.webSocket = null
-                Log.d(TAG, "🔌 Conexión cerrada.")
             }
         })
     }
 
-    private fun retryConnection() {
-
-        // 🔐 BONUS: no reintentar si no hay sesión
-        if (sessionManager?.isUserLoggedIn() == false) {
-            Log.w(TAG, "Reconexión cancelada: sesión cerrada.")
-            return
-        }
-
-        currentUrl?.let { url ->
-            Handler(Looper.getMainLooper()).postDelayed({
-                if (!isConnected && webSocket == null) {
-                    connect(url)
-                }
-            }, 3000)
-        }
-    }
-
-    // --- ACCIONES ---
+    // --- ACCIONES (Corregido: Ahora usa un Map real para evitar JSONs mal formados) ---
     fun sendAction(
         action: String,
         params: Map<String, Any>? = null,
         requestId: String? = null
     ) {
-        if (!isConnected) {
-            Log.e(TAG, "Envío fallido: Socket desconectado ($action)")
-            return
-        }
+        if (!isConnected) return
 
-        val json = StringBuilder()
-        json.append("{ \"action\": \"$action\"")
+        // Construimos el objeto antes de enviarlo
+        val messageMap = mutableMapOf<String, Any>()
+        messageMap["action"] = action
+        requestId?.let { messageMap["request_id"] = it }
+        params?.let { messageMap.putAll(it) }
 
-        if (requestId != null) {
-            json.append(", \"request_id\": \"$requestId\"")
-        }
+        // Gson se encarga de escapar comillas y caracteres raros
+        val jsonString = gson.toJson(messageMap)
 
-        params?.forEach { (key, value) ->
-            json.append(", \"$key\": \"$value\"")
-        }
-
-        json.append(" }")
-        Log.d(TAG, "Peticion enviado: $json")
-        webSocket?.send(json.toString())
+        Log.d(TAG, "Enviando: $jsonString")
+        webSocket?.send(jsonString)
     }
 
-    fun close() {
-        webSocket?.close(1000, "Cierre normal")
-        webSocket = null
-        isConnected = false
-        onConnected = null
+    private fun retryConnection() {
+        if (sessionManager?.isUserLoggedIn() == false) return
+        currentUrl?.let { url ->
+            Handler(Looper.getMainLooper()).postDelayed({
+                if (!isConnected) connect(url)
+            }, 3000)
+        }
     }
-
     // --- TEST DE CONEXIÓN ---
     fun testConnection(url: String, onResult: (Boolean, String) -> Unit) {
+        // Usamos un cliente temporal con un timeout corto para no hacer esperar al usuario
         val testClient = OkHttpClient.Builder()
             .connectTimeout(5, TimeUnit.SECONDS)
+            .readTimeout(5, TimeUnit.SECONDS)
             .build()
 
         val request = Request.Builder().url(url).build()
 
         testClient.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
-                webSocket.close(1000, "Test finalizado")
-                onResult(true, "OK")
+                // Si abre, la URL es válida y el servidor responde
+                webSocket.close(1000, "Test exitoso")
+                Handler(Looper.getMainLooper()).post {
+                    onResult(true, "Conexión exitosa")
+                }
             }
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                onResult(false, t.message ?: "Servidor no alcanzado")
+                // Si falla, devolvemos el error amigable
+                Handler(Looper.getMainLooper()).post {
+                    onResult(false, t.message ?: "Servidor no alcanzado")
+                }
             }
         })
+    }
+    fun close() {
+        webSocket?.close(1000, "Cierre normal")
+        webSocket = null
+        isConnected = false
     }
 }

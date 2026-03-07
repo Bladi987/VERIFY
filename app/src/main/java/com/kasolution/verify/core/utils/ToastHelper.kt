@@ -1,8 +1,15 @@
 package com.kasolution.verify.core.utils
 
+import android.content.Context
 import android.graphics.Color
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
+import android.view.animation.AnimationUtils
+import android.widget.ImageView
+import android.widget.TextView
+import android.widget.Toast
+import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import com.google.android.material.snackbar.Snackbar
 import com.kasolution.verify.R
@@ -41,5 +48,23 @@ object ToastHelper {
         }
 
         snackbar.show()
+    }
+    fun clasicCustomToast(vista: View, mensaje: String?, isSuccess: Boolean){
+        val context = vista.context
+
+        val binding = LayoutCustomToastBinding.inflate(LayoutInflater.from(context))
+        val anim1 = AnimationUtils.loadAnimation(context, R.anim.anim_toast_enter)
+        val colorRes = if (isSuccess) R.color.semantic_success_green else R.color.semantic_error_red
+        val iconRes = if (isSuccess) R.drawable.ic_check_circle else R.drawable.ic_error
+        binding.toastCard.setCardBackgroundColor(ContextCompat.getColor(context, colorRes))
+        binding.toastIcon.setImageResource(iconRes)
+        binding.toastText.text=mensaje
+        binding.toastCard.startAnimation(anim1)
+        Toast(context).apply {
+            duration = Toast.LENGTH_SHORT
+            setGravity(Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL, 0, 150)
+            view = binding.root
+            show()
+        }
     }
 }

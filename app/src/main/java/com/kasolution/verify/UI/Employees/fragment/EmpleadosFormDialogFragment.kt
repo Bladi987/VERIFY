@@ -5,11 +5,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
-import android.widget.Toast
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import com.kasolution.verify.R
-import com.kasolution.verify.UI.Employees.model.Empleado
+import com.kasolution.verify.domain.employees.model.Employee
 import com.kasolution.verify.UI.Employees.viewModel.EmpleadosViewModel
 import com.kasolution.verify.core.utils.ToastHelper
 import com.kasolution.verify.databinding.FragmentEmpleadosFormDialogBinding
@@ -33,7 +32,7 @@ class EmpleadosFormDialogFragment : DialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val emp = arguments?.getSerializable(ARG_EMPLEADO) as? Empleado
+        val emp = arguments?.getParcelable<Employee>(ARG_EMPLEADO)
         setupRoleDropdown()
         if (emp != null) {
             // MODO EDICIÓN
@@ -156,11 +155,11 @@ class EmpleadosFormDialogFragment : DialogFragment() {
     companion object {
         private const val ARG_EMPLEADO = "empleado_data"
 
-        fun newInstance(empleado: Empleado? = null): EmpleadosFormDialogFragment {
+        fun newInstance(empleado: Employee? = null): EmpleadosFormDialogFragment {
             val fragment = EmpleadosFormDialogFragment()
             empleado?.let {
                 val args = Bundle()
-                args.putSerializable(ARG_EMPLEADO, it)
+                args.putParcelable(ARG_EMPLEADO, it)
                 fragment.arguments = args
             }
             return fragment

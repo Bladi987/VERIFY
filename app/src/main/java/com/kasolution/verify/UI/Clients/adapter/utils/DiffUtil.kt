@@ -1,11 +1,11 @@
 package com.kasolution.verify.UI.Clients.adapter.utils
 
 import androidx.recyclerview.widget.DiffUtil
-import com.kasolution.verify.UI.Clients.model.Cliente
+import com.kasolution.verify.domain.clients.model.Client
 
 class ClienteDiffCallback(
-    private val oldList: List<Cliente>,
-    private val newList: List<Cliente>
+    private val oldList: List<Client>,
+    private val newList: List<Client>
 ) : DiffUtil.Callback() {
 
     override fun getOldListSize(): Int = oldList.size

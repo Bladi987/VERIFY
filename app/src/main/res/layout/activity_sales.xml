@@ -29,6 +29,8 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/btnScannerVenta"
             app:layout_constraintStart_toStartOf="parent"
+            app:endIconMode="custom"
+            app:endIconDrawable="@drawable/ic_delete"
             app:layout_constraintTop_toTopOf="parent">
 
             <AutoCompleteTextView

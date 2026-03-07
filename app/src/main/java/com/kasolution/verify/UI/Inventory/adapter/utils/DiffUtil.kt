@@ -1,7 +1,7 @@
 package com.kasolution.verify.UI.Inventory.adapter.utils
 
 import androidx.recyclerview.widget.DiffUtil
-import com.kasolution.verify.UI.Inventory.model.Product
+import com.kasolution.verify.domain.Inventory.model.Product
 
 class InventoryDiffCallback(
     private val oldList: List<Product>,

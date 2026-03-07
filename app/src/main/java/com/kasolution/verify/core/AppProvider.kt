@@ -35,6 +35,10 @@ import com.kasolution.verify.domain.usecases.Inventory.DeleteProductUseCase
 import com.kasolution.verify.domain.usecases.Inventory.GetProductsUseCase
 import com.kasolution.verify.domain.usecases.Inventory.SaveProductUseCase
 import com.kasolution.verify.domain.usecases.Inventory.UpdateProductUseCase
+import com.kasolution.verify.domain.usecases.Sales.DeleteSaleUseCase
+import com.kasolution.verify.domain.usecases.Sales.GetSaleDetailUseCase
+import com.kasolution.verify.domain.usecases.Sales.GetSalesHistoryUseCase
+import com.kasolution.verify.domain.usecases.Sales.SaveSaleUseCase
 import com.kasolution.verify.domain.usecases.Session.LogoutUseCase
 import com.kasolution.verify.domain.usecases.Suppliers.DeleteSupplierUseCase
 import com.kasolution.verify.domain.usecases.Suppliers.GetSuppliersUseCase
@@ -223,11 +227,17 @@ object AppProvider {
     fun provideSalesViewModelFactory(): SalesViewModelFactory {
         val repoInventory = getInventoryRepository()
         val repoClient = getClientsRepository()
+        val repoSale = getSalesRepository()
+
 
 
         return SalesViewModelFactory(
+            SaveSaleUseCase(repoSale),
+            GetSalesHistoryUseCase(repoSale),
+            DeleteSaleUseCase(repoSale),
             GetProductsUseCase(repoInventory),
             GetClientsUseCase(repoClient),
+            GetSaleDetailUseCase(repoSale),
             socketManager
         )
     }

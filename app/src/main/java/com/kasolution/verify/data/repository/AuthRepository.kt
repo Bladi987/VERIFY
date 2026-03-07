@@ -4,25 +4,25 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.gson.Gson
-import com.kasolution.verify.UI.Access.model.LoginResponse
+import com.kasolution.verify.data.remote.dto.LoginResponseDto
 import com.kasolution.verify.data.local.SessionManager
 import com.kasolution.verify.data.network.SocketManager
-import org.json.JSONObject
+import com.kasolution.verify.data.mapper.toDomain
+import com.kasolution.verify.domain.access.model.LoginResult
+import com.google.gson.JsonParser
 
 class AuthRepository(
     private val socketManager: SocketManager,
     private val sessionManager: SessionManager
 ){
-
     private val TAG = "AuthRepository"
     private val gson = Gson()
     private var isAuthenticating: Boolean = false
 
-    private val _loginResult = MutableLiveData<LoginResponse?>()
-    val loginResult: LiveData<LoginResponse?> get() = _loginResult
+    private val _loginResult = MutableLiveData<LoginResult?>()
+    val loginResult: LiveData<LoginResult?> get() = _loginResult
 
     init {
-        Log.d(TAG, "INIT: Registrando observer de Auth")
         registerObserver()
         setupErrorHandling()
     }
@@ -30,47 +30,51 @@ class AuthRepository(
     private fun setupErrorHandling() {
         socketManager.onConnectionError = { errorMsg ->
             if (isAuthenticating) {
-                val errorResponse = LoginResponse(
-                    action = "CONECTION_ERROR",
-                    status = "error",
-                    message = "Servidor desconectado, intente más tarde.",
-                    data = null
-                )
-                _loginResult.postValue(errorResponse)
+                _loginResult.postValue(LoginResult.Error("Error de red: $errorMsg"))
                 isAuthenticating = false
             }
         }
     }
 
     private fun registerObserver() {
-        // Al ser Singleton, nos aseguramos de no duplicar el observer en el SocketManager
         socketManager.addObserver(TAG) { text ->
             try {
-                val json = JSONObject(text)
-                if (json.optString("action") == "AUTH_LOGIN") {
-                    val response = gson.fromJson(text, LoginResponse::class.java)
+                // Usamos JsonParser de GSON para una lectura más ligera del "action"
+                val jsonObject = JsonParser.parseString(text).asJsonObject
 
-                    if (response.status == "success" && response.data != null) {
-                        sessionManager.saveSession(
-                            response.data.id,
-                            response.data.nombre,
-                            response.data.rol
-                        )
+                if (jsonObject.get("action")?.asString == "AUTH_LOGIN") {
+                    val responseDto = gson.fromJson(text, LoginResponseDto::class.java)
+
+                    if (responseDto.status == "success") {
+                        val data = responseDto.data
+                        // Verificamos datos del DTO antes de guardarlos en sesión
+                        if (data != null) {
+                            sessionManager.saveSession(
+                                data.id,
+                                data.nombre ?: "Usuario",
+                                data.rol ?: "Sin Rol"
+                            )
+                        }
                     }
 
-                    _loginResult.postValue(response)
+                    // Mapeo DTO -> Domain para la UI
+                    _loginResult.postValue(responseDto.toDomain())
                     isAuthenticating = false
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error en parseo Auth: ${e.message}")
+                _loginResult.postValue(LoginResult.Error("Error al procesar respuesta del servidor"))
+                isAuthenticating = false
             }
         }
     }
 
     fun login(usuario: String, pass: String) {
         if (isAuthenticating) return
-
         isAuthenticating = true
+        _loginResult.value = null
+
+        // Aprovechamos que sendAction ahora acepta Map<String, Any> y escapa caracteres
         val params = mapOf(
             "usuario" to usuario,
             "password" to pass
@@ -79,15 +83,16 @@ class AuthRepository(
     }
 
     fun onSocketReconnected() {
-        socketManager.removeObserver(TAG)
+        // Al reconectar, simplemente refrescamos la suscripción
         registerObserver()
     }
 
+    // Este método es vital llamarlo desde el onCleared del ViewModel
     fun clear() {
-        Log.d(TAG, "Limpiando AuthRepository")
+        Log.d(TAG, "Dando de baja observador de Auth")
+        socketManager.removeObserver(TAG)
         isAuthenticating = false
         _loginResult.postValue(null)
-        socketManager.removeObserver(TAG)
     }
 
     fun resetLoginState() {

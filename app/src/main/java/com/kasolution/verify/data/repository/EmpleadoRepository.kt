@@ -1,19 +1,23 @@
 package com.kasolution.verify.data.repository
 
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import com.google.gson.Gson
+import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
+import com.kasolution.verify.data.mapper.toDomain
 import com.kasolution.verify.data.model.SocketResponse
 import com.kasolution.verify.data.network.SocketManager
-import com.kasolution.verify.UI.Employees.model.Empleado
-import org.json.JSONObject
+import com.kasolution.verify.data.remote.dto.EmployeeDto
+import com.kasolution.verify.domain.employees.model.Employee
 
 class EmpleadoRepository(private val socketManager: SocketManager) {
 
     private val TAG = "EmpleadoRepository"
     private val gson = Gson()
 
-    var onEmpleadosListReceived: ((List<Empleado>) -> Unit)? = null
+    var onEmpleadosListReceived: ((List<Employee>) -> Unit)? = null
     var onOperationResult: ((String, Boolean, String?) -> Unit)? = null
 
     init {
@@ -21,65 +25,65 @@ class EmpleadoRepository(private val socketManager: SocketManager) {
     }
 
     /**
-     * Registra (o re-registra) el observer del socket.
-     * ESTA es la pieza clave para soportar reconexiones.
+     * Registra el repositorio en el SocketManager.
+     * Ahora es pública para que el ViewModel la reactive al entrar a la actividad.
      */
-    private fun registerObserver() {
+    fun registerObserver() {
         Log.d(TAG, "Registrando observer de EmpleadoRepository")
-
-        // 🔴 Muy importante: eliminar antes para evitar observers zombies
         socketManager.removeObserver(TAG)
 
         socketManager.addObserver(TAG) { json ->
             try {
-                val jsonObject = JSONObject(json)
-                val action = jsonObject.optString("action")
-                val status = jsonObject.optString("status") == "success"
-                val requestId = jsonObject.optString("request_id", null)
+                // 1. Parseo defensivo (Background thread)
+                val element = JsonParser.parseString(json)
+                if (!element.isJsonObject) return@addObserver
+                val jsonObject = element.asJsonObject
+
+                // Lectura segura de campos
+                val action = if (jsonObject.has("action") && !jsonObject.get("action").isJsonNull) {
+                    jsonObject.get("action").asString
+                } else ""
+
+                val status = if (jsonObject.has("status")) {
+                    jsonObject.get("status").asString == "success"
+                } else false
+
+                val requestId = if (jsonObject.has("request_id") && !jsonObject.get("request_id").isJsonNull) {
+                    jsonObject.get("request_id").asString
+                } else null
 
                 Log.d(TAG, "Repo interceptó acción: $action")
 
                 when (action) {
                     "EMPLEADO_GET_ALL" -> {
-                        val type = object :
-                            TypeToken<SocketResponse<List<Empleado>>>() {}.type
-                        val response: SocketResponse<List<Empleado>> =
-                            gson.fromJson(json, type)
+                        val type = object : TypeToken<SocketResponse<List<EmployeeDto>>>() {}.type
+                        val response: SocketResponse<List<EmployeeDto>> = gson.fromJson(json, type)
 
-                        val lista = response.data ?: emptyList()
+                        val listaDto = response.data ?: emptyList()
+                        val listaDomain = listaDto.map { it.toDomain() }
 
-                        if (onEmpleadosListReceived == null) {
-                            Log.e(
-                                TAG,
-                                "onEmpleadosListReceived es NULL (ViewModel no suscrito aún)"
-                            )
+                        Log.d(TAG, "Empleados mapeados correctamente: ${listaDomain.size}")
+
+                        // 2. Respuesta en el hilo principal
+                        Handler(Looper.getMainLooper()).post {
+                            onEmpleadosListReceived?.invoke(listaDomain)
                         }
-
-                        onEmpleadosListReceived?.invoke(lista)
                     }
 
                     "EMPLEADO_SAVE",
                     "EMPLEADO_UPDATE",
                     "EMPLEADO_DELETE" -> {
-                        Log.d(
-                            TAG,
-                            "Resultado operación $action → success=$status, requestId=$requestId"
-                        )
-                        onOperationResult?.invoke(action, status, requestId)
+                        Log.d(TAG, "Resultado operación $action → success=$status, requestId=$requestId")
+
+                        Handler(Looper.getMainLooper()).post {
+                            onOperationResult?.invoke(action, status, requestId)
+                        }
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error crítico procesando mensaje", e)
+                Log.e(TAG, "Error crítico procesando mensaje en EmpleadoRepository", e)
             }
         }
-    }
-
-    /**
-     * Se debe llamar cuando el socket se reconecta
-     */
-    fun onSocketReconnected() {
-        Log.d(TAG, "Socket reconectado → re-registrando observer")
-        registerObserver()
     }
 
     /* =========================
@@ -90,7 +94,7 @@ class EmpleadoRepository(private val socketManager: SocketManager) {
         socketManager.sendAction("EMPLEADO_GET_ALL")
     }
 
-    fun saveEmpleado(empleado: Empleado, pass: String, requestId: String) {
+    fun saveEmpleado(empleado: Employee, pass: String, requestId: String) {
         val params = mapOf(
             "nombre" to empleado.nombre,
             "usuario" to empleado.usuario,
@@ -101,13 +105,14 @@ class EmpleadoRepository(private val socketManager: SocketManager) {
         socketManager.sendAction("EMPLEADO_SAVE", params, requestId)
     }
 
-    fun updateEmpleado(empleado: Empleado, pass: String?, requestId: String) {
-        val params = mutableMapOf(
-            "id" to empleado.id.toString(),
+    fun updateEmpleado(empleado: Employee, pass: String?, requestId: String) {
+        // Usamos tipos nativos (Int/Boolean) en lugar de toString() manual
+        val params = mutableMapOf<String, Any>(
+            "id" to empleado.id,
             "nombre" to empleado.nombre,
             "usuario" to empleado.usuario,
             "rol" to empleado.rol,
-            "estado" to empleado.estado.toString()
+            "estado" to if (empleado.estado) 1 else 0
         )
         if (!pass.isNullOrEmpty()) {
             params["password"] = pass
@@ -118,16 +123,24 @@ class EmpleadoRepository(private val socketManager: SocketManager) {
     fun deleteEmpleado(id: Int, requestId: String) {
         socketManager.sendAction(
             "EMPLEADO_DELETE",
-            mapOf("id" to id.toString()),
+            mapOf("id" to id),
             requestId
         )
     }
 
-    /**
-     * Limpieza total (cuando el ViewModel muere)
-     */
+    /* =========================
+       GESTIÓN DE ESTADO Y LIMPIEZA
+       ========================= */
+
+    fun onSocketReconnected() {
+        Log.d(TAG, "Socket reconectado → Refrescando empleados")
+        // No solo re-registramos, pedimos los datos
+        registerObserver()
+        getEmpleados()
+    }
+
     fun clear() {
-        Log.d(TAG, "Cerrando repositorio y removiendo observer")
+        Log.d(TAG, "Cerrando repositorio de Empleados y removiendo observer")
         socketManager.removeObserver(TAG)
         onEmpleadosListReceived = null
         onOperationResult = null

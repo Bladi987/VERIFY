@@ -4,28 +4,19 @@ import android.content.Context
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.View
-import android.view.WindowManager
 import android.view.animation.AnimationUtils
-import android.view.animation.DecelerateInterpolator
 import android.view.inputmethod.InputMethodManager
-import android.widget.Toast
 import androidx.activity.viewModels
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.content.ContextCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.snackbar.Snackbar
 import com.kasolution.verify.R
 import com.kasolution.verify.UI.Clientes.viewModel.ClientesViewModel
 import com.kasolution.verify.UI.Clients.adapter.ClientesAdapter
 import com.kasolution.verify.UI.Clients.fragment.ClientFormDialogFragment
-import com.kasolution.verify.UI.Clients.model.Cliente
+import com.kasolution.verify.domain.clients.model.Client
 import com.kasolution.verify.core.AppProvider
 import com.kasolution.verify.core.utils.DialogHelper
 import com.kasolution.verify.core.utils.ProgressHelper
@@ -37,8 +28,8 @@ class ClientsActivity : AppCompatActivity() {
     private lateinit var binding: ActivityClientsBinding
     private lateinit var lmanager: LinearLayoutManager
     private lateinit var adapter: ClientesAdapter
-    private lateinit var lista: ArrayList<Cliente>
-    private var selectedClient: Cliente? = null
+    private lateinit var lista: ArrayList<Client>
+    private var selectedClient: Client? = null
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
     private val viewModel: ClientesViewModel by viewModels {
         AppProvider.provideClientsViewModelFactory()
@@ -64,7 +55,6 @@ class ClientsActivity : AppCompatActivity() {
         initRecycler()
         initBottonSheet()
         setupObservers()
-        viewModel.loadClientes()
 
         binding.etSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -141,12 +131,12 @@ class ClientsActivity : AppCompatActivity() {
             }
         })
     }
-    private fun onItemClicListener(cliente: Cliente) {
+    private fun onItemClicListener(cliente: Client) {
         //Toast.makeText(this, "${cliente.nombre} - ${cliente.usuario}", Toast.LENGTH_SHORT).show()
         hideOptions()
     }
 
-    private fun showOptionsFor(cliente: Cliente, position: Int) {
+    private fun showOptionsFor(cliente: Client, position: Int) {
         binding.etSearch.clearFocus()
         selectedClient = cliente
         binding.tvSelectedName.text = cliente.nombre

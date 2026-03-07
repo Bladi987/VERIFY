@@ -15,7 +15,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.kasolution.verify.R
 import com.kasolution.verify.UI.Suppliers.adapter.SupplierAdapter
 import com.kasolution.verify.UI.Suppliers.fragment.SuppliersFormDialogFragment
-import com.kasolution.verify.UI.Suppliers.model.Supplier
+import com.kasolution.verify.domain.supplier.model.Supplier
 import com.kasolution.verify.UI.Suppliers.viewModel.SuppliersViewModel
 import com.kasolution.verify.core.AppProvider
 import com.kasolution.verify.core.utils.DialogHelper
@@ -57,7 +57,6 @@ class SuppliersActivity : AppCompatActivity() {
         initRecycler()
         initBottonSheet()
         setupObservers()
-        viewModel.loadSuppliers()
 
         binding.etSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}

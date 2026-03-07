@@ -15,6 +15,7 @@ import com.kasolution.verify.core.AppProvider
 import com.kasolution.verify.core.utils.DialogHelper
 import com.kasolution.verify.core.utils.ToastHelper
 import com.kasolution.verify.databinding.ActivityLoginBinding
+import com.kasolution.verify.domain.access.model.LoginResult
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
@@ -54,35 +55,47 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun setupObservers() {
-        viewModel.loginResult.observe(this) { response ->
-            if (response == null) return@observe
-            // Siempre restauramos el estado de la UI al recibir respuesta
+        viewModel.loginResult.observe(this) { result ->
+            // Si el resultado es null, no hacemos nada (estado inicial)
+            if (result == null) return@observe
+
+            // Siempre restauramos el estado de la UI al recibir cualquier resultado
             binding.btnLogin.isEnabled = true
-            Log.e("LoginActivity", "action: ${response.action}")
-            Log.e("LoginActivity", "estatus: ${response.status}")
-            if (response.status == "success") {
-                irADashboard()
-                viewModel.resetState()
-            } else if (response.action=="CONECTION_ERROR") {
-                DialogHelper.showNotification(
-                    this,
-                    "Aviso",
-                    response.message.toString(), R.drawable.ic_server_disconnect,
-                    android.R.color.holo_red_light
-                )
-            }else{
-                DialogHelper.showNotification(
-                    this,
-                    "Aviso",
-                    response.message.toString(), R.drawable.ic_error,
-                    android.R.color.holo_red_light
-                )
-            }
             binding.btnLogin.setLoading(false)
-            binding.btnLogin.isEnabled = true
+
+            when (result) {
+                is LoginResult.Success -> {
+                    // El login fue exitoso, ya tenemos al objeto User dentro de result.user
+                    Log.d("LoginActivity", "Login exitoso: ${result.user.nombre}")
+                    irADashboard()
+                    viewModel.resetState()
+                }
+                is LoginResult.Error -> {
+                    // Manejamos los errores según el mensaje o tipo
+                    Log.e("LoginActivity", "Error: ${result.message}")
+
+                    // Aquí podrías diferenciar iconos según el mensaje si quisieras,
+                    // pero lo más limpio es usar el mensaje que ya viene del dominio/mapper.
+                    val icon = if (result.message.contains("desconectado")) {
+                        R.drawable.ic_server_disconnect
+                    } else {
+                        R.drawable.ic_error
+                    }
+
+                    DialogHelper.showNotification(
+                        this,
+                        "Aviso",
+                        result.message,
+                        icon,
+                        android.R.color.holo_red_light
+                    )
+                }
+            }
         }
+
         viewModel.isLoading.observe(this) { loading ->
             binding.btnLogin.setLoading(loading)
+            if (loading) binding.btnLogin.isEnabled = false
         }
     }
 

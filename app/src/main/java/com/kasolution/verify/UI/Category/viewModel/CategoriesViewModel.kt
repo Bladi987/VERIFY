@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.kasolution.verify.UI.Category.model.Category
+import com.kasolution.verify.domain.Inventory.model.Category
 import com.kasolution.verify.data.network.SocketManager
 import com.kasolution.verify.domain.usecases.Categories.DeleteCategoryUseCase
 import com.kasolution.verify.domain.usecases.Categories.GetCategoriesUseCase
@@ -35,11 +35,13 @@ class CategoriesViewModel(
     val operationSuccess: LiveData<String> get() = _operationSuccess
 
     init {
+
+        getCategoriesUseCase.repository.registerObserver()
         setupRepositoryObservers()
 
         socketManager.onConnected = {
             Log.d(TAG, "Socket conectado (Categoria)")
-            getCategoriesUseCase.repository.onSocketReconnected()
+            loadCategories()
         }
 
         if (socketManager.isConnected) {
@@ -128,5 +130,6 @@ class CategoriesViewModel(
     override fun onCleared() {
         super.onCleared()
         Log.d(TAG, "CategoriesViewModel destruido")
+        getCategoriesUseCase.repository.clear()
     }
 }

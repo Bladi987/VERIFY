@@ -6,16 +6,16 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Filter
-import com.kasolution.verify.UI.Clients.model.Cliente
+import com.kasolution.verify.domain.clients.model.Client
 import com.kasolution.verify.databinding.ItemClienteSuggestionBinding
 
-class SearchClienteAdapter(context: Context, private val fullList: List<Cliente>) :
-    ArrayAdapter<Cliente>(context, 0, fullList) {
+class SearchClienteAdapter(context: Context, private val fullList: List<Client>) :
+    ArrayAdapter<Client>(context, 0, fullList) {
 
-    private var mFilteredList: List<Cliente> = fullList
+    private var mFilteredList: List<Client> = fullList
 
     override fun getCount(): Int = mFilteredList.size
-    override fun getItem(position: Int): Cliente = mFilteredList[position]
+    override fun getItem(position: Int): Client = mFilteredList[position]
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
         val binding: ItemClienteSuggestionBinding
@@ -65,7 +65,7 @@ class SearchClienteAdapter(context: Context, private val fullList: List<Cliente>
 
             @Suppress("UNCHECKED_CAST")
             override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
-                mFilteredList = results?.values as? List<Cliente> ?: listOf()
+                mFilteredList = results?.values as? List<Client> ?: listOf()
                 if (results?.count ?: 0 > 0) {
                     notifyDataSetChanged()
                 } else {
@@ -75,7 +75,7 @@ class SearchClienteAdapter(context: Context, private val fullList: List<Cliente>
 
             // Lo que se verá en el buscador después de seleccionar
             override fun convertResultToString(resultValue: Any?): CharSequence {
-                return (resultValue as Cliente).nombre
+                return (resultValue as Client).nombre
             }
         }
     }
