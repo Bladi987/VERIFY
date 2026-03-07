@@ -95,6 +95,7 @@ class SalesActivity : AppCompatActivity() {
                 }
             )
         }
+        binding.tilBuscarVenta.isEndIconVisible = false
 
     }
 
@@ -127,6 +128,8 @@ class SalesActivity : AppCompatActivity() {
     private fun setupObservers() {
         // OBSERVADOR DEL CARRITO: Esta es la clave
         viewModel.cartList.observe(this) { nuevaLista ->
+            val tieneProductos = nuevaLista.isNotEmpty()
+            binding.tilBuscarVenta.isEndIconVisible = tieneProductos
             adapterVenta.updateList(nuevaLista) // Usa el DiffUtil que creamos
             // Si el carrito está vacío, podrías mostrar un texto de "Carrito vacío"
             binding.tvTotalPagar.visibility = if (nuevaLista.isEmpty()) View.GONE else View.VISIBLE
