@@ -18,6 +18,7 @@ import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import com.kasolution.verify.UI.Components.Scanner.viewModel.ScannerViewModelFactory
+import com.kasolution.verify.core.AppProvider
 import com.kasolution.verify.core.utils.DialogHelper
 import com.kasolution.verify.core.utils.ToastHelper
 import com.kasolution.verify.data.network.SocketManager
@@ -26,6 +27,7 @@ import com.kasolution.verify.databinding.ActivityScannerBinding
 
 class ScannerActivity : AppCompatActivity() {
     private lateinit var binding: ActivityScannerBinding
+    private var scanMode: String = "SALE"
     private var cameraControl: CameraControl? = null
     private lateinit var toneGenerator: ToneGenerator
     private var isMultiScan: Boolean = false
@@ -35,7 +37,7 @@ class ScannerActivity : AppCompatActivity() {
     private var montoTotal: Double = 0.0
 
     private val viewModel: ScannerViewModel by viewModels {
-        ScannerViewModelFactory(InventoryRepository(SocketManager.getInstance()))
+        AppProvider.provideScannerViewModelFactory()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,6 +46,7 @@ class ScannerActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         isMultiScan = intent.getBooleanExtra("MULTI_SCAN", false)
+        scanMode = intent.getStringExtra("SCAN_MODE") ?: "SALE"
         binding.tvBadgeContador.visibility = if (isMultiScan) View.VISIBLE else View.GONE
         binding.cardTotal.visibility = if (isMultiScan) View.VISIBLE else View.GONE
 
@@ -51,6 +54,7 @@ class ScannerActivity : AppCompatActivity() {
         totalEscaneados = intent.getIntExtra("INITIAL_COUNT", 0)
 
         if (isMultiScan) {
+            setupObservers()
             binding.tvTotalAcumulado.text = "S/ ${String.format("%.2f", montoTotal)}"
             binding.tvBadgeContador.text = totalEscaneados.toString()
             binding.cardTotal.visibility = View.VISIBLE
@@ -58,7 +62,7 @@ class ScannerActivity : AppCompatActivity() {
 
         toneGenerator = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100)
 
-        setupObservers()
+
         checkPermissionsAndStart()
     }
 
@@ -76,7 +80,12 @@ class ScannerActivity : AppCompatActivity() {
 
                 if (existe) {
                     totalEscaneados++
-                    montoTotal += producto!!.precioVenta
+                    val precioAMostrar = if (scanMode == "PURCHASE") {
+                        producto!!.precioCompra
+                    } else {
+                        producto!!.precioVenta
+                    }
+                    montoTotal += precioAMostrar
                     binding.tvBadgeContador.text = totalEscaneados.toString()
 
                     val totalFormateado = "S/ ${String.format("%.2f", montoTotal)}"
@@ -84,7 +93,7 @@ class ScannerActivity : AppCompatActivity() {
 
                     showProductFeedback(
                         producto!!.nombre,
-                        "S/ ${String.format("%.2f", producto.precioVenta)}"
+                        "S/ ${String.format("%.2f", precioAMostrar)}"
                     )
                     binding.cardTotal.animate().scaleX(1.1f).scaleY(1.1f).setDuration(100)
                         .withEndAction {

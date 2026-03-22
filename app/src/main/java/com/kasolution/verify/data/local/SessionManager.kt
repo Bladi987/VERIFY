@@ -19,6 +19,8 @@ class SessionManager(context: Context) {
 
     fun isUserLoggedIn(): Boolean = prefs.getBoolean("is_logged_in", false)
 
+    fun getUserId(): Int = prefs.getInt("user_id", -1)
+
     fun getUserName(): String = prefs.getString("user_name", "") ?: ""
 
     fun getUserRole(): String = prefs.getString("user_role", "") ?: ""

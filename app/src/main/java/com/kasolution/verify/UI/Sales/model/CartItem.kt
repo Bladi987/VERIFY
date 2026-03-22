@@ -1,4 +1,4 @@
-package com.kasolution.verify.domain.sales.model
+package com.kasolution.verify.UI.Sales.model
 
 import com.kasolution.verify.domain.Inventory.model.Product
 

@@ -101,7 +101,7 @@ class EmpleadosFormDialogFragment : DialogFragment() {
     }
 
     private fun validar(n: String, u: String, p: String, r: String, isEdit: Boolean): Boolean {
-        // Limpiar errores previos (Opcional pero recomendado)
+        var isValid = true
         binding.run {
             tilFullName.error = null
             tilUserName.error = null
@@ -110,28 +110,13 @@ class EmpleadosFormDialogFragment : DialogFragment() {
         }
 
         // Validaciones de campos obligatorios
-        if (n.isBlank()) {
-            binding.tilFullName.error = "El nombre es obligatorio"
-            return false
-        }
-
-        if (u.isBlank()) {
-            binding.tilUserName.error = "El usuario es obligatorio"
-            return false
-        }
-
-        if (r.isBlank()) {
-            binding.tilRole.error = "Seleccione un Rol"
-            return false
-        }
-
+        if (n.isBlank()) { binding.tilFullName.error = "El nombre es obligatorio";isValid=false }
+        if (u.isBlank()) { binding.tilUserName.error = "El usuario es obligatorio";isValid=false }
+        if (r.isBlank()) { binding.tilRole.error = "Seleccione un Rol";isValid=false }
         // Validación condicional para nuevos registros
-        if (!isEdit && p.isBlank()) {
-            binding.tilPasswordDialog.error = "Contraseña es obligatoria para nuevos registros"
-            return false
-        }
+        if (!isEdit && p.isBlank()) { binding.tilPasswordDialog.error = "Contraseña es obligatoria para nuevos registros";isValid=false }
 
-        return true
+        return isValid
     }
 
     override fun onDestroyView() {
@@ -149,6 +134,7 @@ class EmpleadosFormDialogFragment : DialogFragment() {
             )
             // Opcional: Quitar el fondo por defecto de Android para que se vea tu fondo redondeado
             setBackgroundDrawableResource(android.R.color.transparent)
+            setWindowAnimations(R.style.AnimationiOSDialog)
         }
     }
 

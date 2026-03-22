@@ -1,7 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
     <style name="Base.Theme.VERIFY" parent="Theme.MaterialComponents.Light.NoActionBar">
-        <!-- Customize your light theme here. -->
         <item name="colorPrimary">@color/blue_corporative_primary</item>
         <item name="colorPrimaryDark">@color/blue_corporative_primary</item>
         <item name="colorAccent">@color/blue_corporative_primary</item>
@@ -12,23 +10,41 @@
         <item name="android:windowTranslucentStatus">false</item>
 
         <item name="android:textColorPrimary">@color/grey_text_dark</item>
+
+        <item name="bottomSheetDialogTheme">@style/CustomBottomSheetDialog</item>
     </style>
 
     <style name="Theme.VERIFY" parent="Base.Theme.VERIFY" />
+
+    <style name="CustomBottomSheetDialog" parent="Theme.Design.Light.BottomSheetDialog">
+        <item name="android:windowIsFloating">false</item>
+        <item name="bottomSheetStyle">@style/CustomBottomSheetStyle</item>
+    </style>
+
+    <style name="CustomBottomSheetStyle" parent="Widget.Design.BottomSheet.Modal">
+        <item name="android:background">@drawable/bg_bottom_sheet</item>
+        <item name="backgroundTint">@android:color/transparent</item>
+    </style>
+
+    <style name="DialogAnimation">
+        <item name="android:windowEnterAnimation">@anim/bounce</item>
+        <item name="android:windowExitAnimation">@anim/out_bounce</item>
+    </style>
+
+    <style name="AnimationiOSDialog">
+        <item name="android:windowEnterAnimation">@anim/dialog_pop_in</item>
+        <item name="android:windowExitAnimation">@anim/dialog_pop_out</item>
+    </style>
+
+    <style name="Animation.iOS.Sheet" parent="@android:style/Animation.Activity">
+        <item name="android:windowEnterAnimation">@anim/ios_sheet_entrance</item>
+        <item name="android:windowExitAnimation">@anim/ios_sheet_exit</item>
+    </style>
 
     <style name="ShapeAppearance.TopRounded" parent="">
         <item name="cornerSizeTopLeft">24dp</item>
         <item name="cornerSizeTopRight">24dp</item>
         <item name="cornerSizeBottomLeft">0dp</item>
         <item name="cornerSizeBottomRight">0dp</item>
-    </style>
-
-
-    <style name="BottomSheetDialogTheme" parent="Theme.Design.Light.BottomSheetDialog">
-        <item name="bottomSheetStyle">@style/BottomSheetStyle</item>
-    </style>
-
-    <style name="BottomSheetStyle" parent="Widget.Design.BottomSheet.Modal">
-        <item name="android:background">@drawable/bg_bottom_sheet</item>
     </style>
 </resources>

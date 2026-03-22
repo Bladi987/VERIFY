@@ -17,29 +17,23 @@ class InventoryRepository(private val socketManager: SocketManager) {
     private val TAG = "InventoryRepository"
     private val gson = Gson()
 
-    var onInventoryListReceived: ((List<Product>) -> Unit)? = null
+    // Callbacks para el ViewModel (Estructura idéntica a Clientes)
+    var onProductsListReceived: ((List<Product>) -> Unit)? = null
     var onOperationResult: ((String, Boolean, String?) -> Unit)? = null
 
     init {
         registerObserver()
     }
 
-    /**
-     * Registra el repositorio en el SocketManager.
-     * Se llama en el init y también desde el ViewModel para reactivar la escucha.
-     */
     fun registerObserver() {
-        Log.d(TAG, "Registrando observer de InventoryRepository")
-        socketManager.removeObserver(TAG)
-
+//        socketManager.removeObserver(TAG)
         socketManager.addObserver(TAG) { json ->
             try {
-                // 1. Parseo defensivo con JsonParser (Hilo de fondo del Socket)
                 val element = JsonParser.parseString(json)
                 if (!element.isJsonObject) return@addObserver
                 val jsonObject = element.asJsonObject
 
-                // Lectura segura de la acción
+                // Lectura de acción igual a Clientes
                 val action = if (jsonObject.has("action") && !jsonObject.get("action").isJsonNull) {
                     jsonObject.get("action").asString
                 } else ""
@@ -49,22 +43,18 @@ class InventoryRepository(private val socketManager: SocketManager) {
                         val type = object : TypeToken<SocketResponse<List<ProductDto>>>() {}.type
                         val response: SocketResponse<List<ProductDto>> = gson.fromJson(json, type)
 
-                        // Mapeo masivo a dominio (operación costosa en memoria)
+                        // Mapeo seguro usando el DTO
                         val listaDomain = response.data?.map { it.toDomain() } ?: emptyList()
 
                         Log.d(TAG, "Productos mapeados con éxito: ${listaDomain.size}")
 
-                        // 2. IMPORTANTE: Entregar el resultado en el hilo principal
                         Handler(Looper.getMainLooper()).post {
-                            onInventoryListReceived?.invoke(listaDomain)
+                            onProductsListReceived?.invoke(listaDomain)
                         }
                     }
 
                     "PRODUCT_SAVE", "PRODUCT_UPDATE", "PRODUCT_DELETE" -> {
-                        val status = if (jsonObject.has("status")) {
-                            jsonObject.get("status").asString == "success"
-                        } else false
-
+                        val status = jsonObject.get("status")?.asString == "success"
                         val requestId = if (jsonObject.has("request_id") && !jsonObject.get("request_id").isJsonNull) {
                             jsonObject.get("request_id").asString
                         } else null
@@ -77,7 +67,10 @@ class InventoryRepository(private val socketManager: SocketManager) {
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error procesando mensaje en $TAG: ${e.message}")
+                Log.e(TAG, "Error crítico procesando mensaje en $TAG: ${e.message}")
+                Handler(Looper.getMainLooper()).post {
+                    onOperationResult?.invoke("ERROR_DATOS", false, null)
+                }
             }
         }
     }
@@ -100,14 +93,14 @@ class InventoryRepository(private val socketManager: SocketManager) {
             "precio_venta" to product.precioVenta,
             "stock" to product.stock,
             "unidad_medida" to product.unidadMedida,
-            "estado" to if (product.estado) 1 else 0 // Aseguramos formato numérico para el server
+            "estado" to if (product.estado) 1 else 0
         )
         socketManager.sendAction("PRODUCT_SAVE", params, requestId)
     }
 
     fun updateProduct(product: Product, requestId: String) {
         val params = mapOf(
-            "id_producto" to product.id, // Enviamos el Int directamente
+            "id_producto" to product.id, // Coincide con InventoryController.php
             "codigo" to product.codigo,
             "nombre" to product.nombre,
             "id_categoria" to product.idCategoria,
@@ -124,25 +117,24 @@ class InventoryRepository(private val socketManager: SocketManager) {
     fun deleteProduct(id: Int, requestId: String) {
         socketManager.sendAction(
             "PRODUCT_DELETE",
-            mapOf("id_producto" to id),
+            mapOf("id_producto" to id), // Envía el ID para el borrado lógico (estado = 0)
             requestId
         )
     }
 
     /* ============================
-       RECONEXIÓN Y LIMPIEZA
+       GESTIÓN DE ESTADO Y LIMPIEZA
        ============================ */
 
     fun onSocketReconnected() {
-        Log.d(TAG, "Socket reconectado → Refrescando inventario")
-        registerObserver()
+        Log.d(TAG, "Socket reconectado → Solicitando actualización de productos")
         getProducts()
     }
 
     fun clear() {
         Log.d(TAG, "Cerrando InventoryRepository y removiendo observer")
         socketManager.removeObserver(TAG)
-        onInventoryListReceived = null
+        onProductsListReceived = null
         onOperationResult = null
     }
 }

@@ -4,70 +4,115 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="16dp"
-    app:cardCornerRadius="24dp"
     android:backgroundTint="@color/white_pure"
+    app:cardCornerRadius="24dp"
     app:cardElevation="8dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:padding="20dp">
+
+        <ImageView
+            android:id="@+id/ivConfigIcon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_settings"
+            app:tint="@color/grey_text_dark" />
 
         <TextView
-            android:layout_width="match_parent"
+            android:id="@+id/tvDialogTitle"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
+            android:layout_marginTop="12dp"
             android:text="Configuración Técnica"
-            android:textColor="@android:color/black"
+            android:textColor="@color/grey_text_dark"
             android:textSize="20sp"
             android:textStyle="bold" />
 
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            android:text="Ingrese la dirección del servidor para continuar." />
+            android:layout_marginTop="4dp"
+            android:text="Establezca la conexión con el servidor"
+            android:textColor="@color/grey_text_secondary"
+            android:textSize="14sp" />
 
-        <EditText
-            android:id="@+id/etIp"
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilIp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:hint="Dirección IP (ej: 192.168.1.7)"
-            android:inputType="textUri" />
+            android:layout_marginTop="24dp"
+            android:hint="Dirección IP o Host"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:startIconDrawable="@drawable/ic_dns"
+            app:startIconTint="@color/grey_text_secondary">
 
-        <EditText
-            android:id="@+id/etPort"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etIp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textUri"
+                android:textColor="@color/grey_text_dark"
+                android:textSize="16sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilPort"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Puerto (ej: 8080)"
-            android:inputType="number"
-            android:text="8080" />
+            android:layout_marginTop="12dp"
+            android:hint="Puerto"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:startIconDrawable="@drawable/ic_port"
+            app:startIconTint="@color/grey_text_secondary">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etPort"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:text="8080"
+                android:textColor="@color/grey_text_dark"
+                android:textSize="16sp" />
+        </com.google.android.material.textfield.TextInputLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
+            android:baselineAligned="false"
+            android:gravity="fill"
             android:orientation="horizontal">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCancel"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_marginEnd="8dp"
                 android:layout_weight="1"
-                android:text="Cancelar"
+                android:text="CANCELAR"
                 app:cornerRadius="12dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnConfirm"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:layout_weight="1.2"
+                android:backgroundTint="@color/blue_corporative_primary"
+                android:text="PROBAR Y GUARDAR"
                 android:textColor="@color/white_pure"
-                android:text="Probar y Guardar"
                 app:cornerRadius="12dp" />
         </LinearLayout>
     </LinearLayout>

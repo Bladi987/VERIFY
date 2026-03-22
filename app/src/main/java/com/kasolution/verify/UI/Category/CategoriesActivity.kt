@@ -18,7 +18,9 @@ import com.kasolution.verify.UI.Category.adapter.CategoriesAdapter
 import com.kasolution.verify.UI.Category.fragment.CategoryFormDialogFragment
 import com.kasolution.verify.domain.Inventory.model.Category
 import com.kasolution.verify.UI.Category.viewModel.CategoriesViewModel
+import com.kasolution.verify.UI.Clients.fragment.ClientFormDialogFragment
 import com.kasolution.verify.core.AppProvider
+import com.kasolution.verify.core.utils.BottomSheetHelper
 import com.kasolution.verify.core.utils.DialogHelper
 import com.kasolution.verify.core.utils.ProgressHelper
 import com.kasolution.verify.core.utils.ToastHelper
@@ -31,7 +33,6 @@ class CategoriesActivity : AppCompatActivity() {
     private lateinit var adapter: CategoriesAdapter
     private lateinit var lista: ArrayList<Category>
     private var selectedCategory: Category? = null
-    private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
     private val viewModel: CategoriesViewModel by viewModels {
         AppProvider.provideCategoriesViewModelFactory()
     }
@@ -40,12 +41,6 @@ class CategoriesActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
-        bottomSheetBehavior = BottomSheetBehavior.from(binding.layoutOptions)
-        bottomSheetBehavior.apply {
-            isHideable = true
-            skipCollapsed = true
-            state = BottomSheetBehavior.STATE_HIDDEN // Inicia oculto
-        }
         setSupportActionBar(binding.actionBar)
         supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
@@ -53,9 +48,7 @@ class CategoriesActivity : AppCompatActivity() {
         }
         lista = ArrayList()
         initRecycler()
-        initBottonSheet()
         setupObservers()
-//        viewModel.loadCategories()
 
         binding.etSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -72,29 +65,6 @@ class CategoriesActivity : AppCompatActivity() {
             val dialogFragment = CategoryFormDialogFragment()
             // El "CategoryTag" es solo una etiqueta para identificar al fragmento en memoria
             dialogFragment.show(supportFragmentManager, "CategoryTag")
-        }
-
-        binding.btnEditOption.setOnClickListener {
-            selectedCategory?.let { category ->
-                // Abrimos el diálogo enviando el objeto categoria
-                val dialog = CategoryFormDialogFragment.newInstance(category)
-                dialog.show(supportFragmentManager, "EditCategory")
-                hideOptions()
-            }
-        }
-
-        binding.btnDeleteOption.setOnClickListener {
-            selectedCategory?.let { category ->
-                DialogHelper.showConfirmation(
-                    this,
-                    "Eliminar Categoria",
-                    "¿Estás seguro de que deseas eliminar ${category.nombre}?",
-                    onConfirm = {
-                        Log.d("CategoriesActivity", "Eliminando categoria: ${category}")
-                        viewModel.deleteCategory(category.id)
-                        hideOptions()
-                    })
-            }
         }
         binding.btnRetry.setOnClickListener {
             viewModel.loadCategories()
@@ -117,52 +87,41 @@ class CategoriesActivity : AppCompatActivity() {
 
         adapter.onDataChanged(lista.isEmpty())
     }
-    private fun initBottonSheet() {
-        bottomSheetBehavior.addBottomSheetCallback(object :
-            BottomSheetBehavior.BottomSheetCallback() {
-            override fun onStateChanged(bottomSheet: View, newState: Int) {
-                if (newState == BottomSheetBehavior.STATE_HIDDEN) {
-                    // Aquí puedes realizar acciones cuando el usuario termine de deslizarlo hacia abajo
-                    adapter.clearSelection()
-                }
-            }
-
-            override fun onSlide(bottomSheet: View, slideOffset: Float) {
-                // Opcional: puedes cambiar la opacidad de un fondo oscuro aquí
-            }
-        })
-    }
     private fun onItemClicListener(category: Category) {
         Log.d("CategoriesActivity", "Categoria seleccionada: ${category.id}")
         //Toast.makeText(this, "${category.nombre} - ${category.usuario}", Toast.LENGTH_SHORT).show()
-        hideOptions()
     }
     private fun showOptionsFor(category: Category, position: Int) {
         binding.etSearch.clearFocus()
         selectedCategory = category
-        binding.tvSelectedName.text = category.nombre
         adapter.setSelectedItem(position)
+        BottomSheetHelper.showInventoryOptions(
+            activity = this,
+            cabeceraName = "Categoria",
+            name = category.nombre,
+            onEdit = {
+                val dialog = CategoryFormDialogFragment.newInstance(category)
+                dialog.show(supportFragmentManager, "EditCategory")
+            },
+            onDelete = {
+                DialogHelper.showConfirmation(
+                    this,
+                    "Eliminar Categoria",
+                    "¿Estás seguro de que deseas eliminar ${category.nombre}?",
+                    onConfirm = {
+                        Log.d("CategoriesActivity", "Eliminando categoria: ${category}")
+                        viewModel.deleteCategory(category.id)
+                    })
+            },
+            onDismiss = {
+                // Limpieza visual cuando el menú se va
+                selectedCategory = null
+                adapter.clearSelection()
+            }
+        )
 
-        if (binding.layoutOptions.visibility != View.VISIBLE) {
-            binding.layoutOptions.visibility = View.VISIBLE
-        }
-
-        // En lugar de usar .animate(), usamos los estados del Behavior
-        if (bottomSheetBehavior.state != BottomSheetBehavior.STATE_EXPANDED) {
-            bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
-        } else {
-            // Animación sutil de feedback si ya estaba abierto (cambio de empleado)
-            binding.tvSelectedName.animate().scaleX(1.1f).scaleY(1.1f).setDuration(100)
-                .withEndAction {
-                    binding.tvSelectedName.animate().scaleX(1f).scaleY(1f).start()
-                }.start()
-        }
     }
 
-    private fun hideOptions() {
-        adapter.clearSelection()
-        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
-    }
     private fun setupObservers() {
         viewModel.categoriesList.observe(this) { lista ->
             val emptyList = lista.isNullOrEmpty()

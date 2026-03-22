@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/sheetContainer"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:elevation="30dp">
+
+    <View
+        android:id="@+id/viewScrim"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="1"
+        android:background="#99000000"
+        android:clickable="true"
+        android:focusable="true"
+        android:importantForAccessibility="no"
+        android:visibility="visible" />
+
+    <LinearLayout
+        android:id="@+id/layoutOptions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:visibility="gone"
+        tools:visibility="visible"
+        app:layout_behavior="@string/bottom_sheet_behavior">
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="@color/white_pure"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="1dp"
+            app:cardMaxElevation="1dp"
+            app:strokeColor="#E5E5EA"
+            app:strokeWidth="1dp">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="24dp">
+
+                <View
+                    android:id="@+id/dragHandle"
+                    android:layout_width="36dp"
+                    android:layout_height="4dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/shape_drag_handle"
+                    android:backgroundTint="#D1D1D6"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/tvHeader"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginTop="20dp"
+                    android:fontFamily="sans-serif-medium"
+                    android:letterSpacing="0.05"
+                    android:text="Productito"
+                    android:textAllCaps="true"
+                    android:textColor="@color/grey_text_secondary"
+                    android:textSize="11sp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/dragHandle" />
+
+                <TextView
+                    android:id="@+id/tvSelectedName"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="24dp"
+                    android:layout_marginTop="4dp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="@color/grey_text_dark"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/tvHeader"
+                    tools:text="Nombre" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnEditOption"
+                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="24dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="Editar"
+                    android:textAllCaps="false"
+                    android:textColor="@color/blue_corporative_primary"
+                    app:backgroundTint="#F2F2F7"
+                    app:cornerRadius="16dp"
+                    app:icon="@drawable/ic_edit"
+                    app:iconSize="20dp"
+                    app:iconTint="@color/blue_corporative_primary"
+                    app:layout_constraintEnd_toStartOf="@+id/btnDeleteOption"
+                    app:layout_constraintHorizontal_weight="1"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/tvSelectedName" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDeleteOption"
+                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="20dp"
+                    android:text="Eliminar"
+                    android:textAllCaps="false"
+                    android:textColor="#FF3B30"
+                    app:backgroundTint="#FFF1F0"
+                    app:cornerRadius="16dp"
+                    app:icon="@drawable/ic_delete"
+                    app:iconSize="20dp"
+                    app:iconTint="#FF3B30"
+                    app:layout_constraintBottom_toBottomOf="@id/btnEditOption"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_weight="1"
+                    app:layout_constraintStart_toEndOf="@id/btnEditOption"
+                    app:layout_constraintTop_toTopOf="@id/btnEditOption" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

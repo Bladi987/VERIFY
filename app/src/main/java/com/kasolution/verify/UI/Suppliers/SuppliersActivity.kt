@@ -11,13 +11,13 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.kasolution.verify.R
 import com.kasolution.verify.UI.Suppliers.adapter.SupplierAdapter
 import com.kasolution.verify.UI.Suppliers.fragment.SuppliersFormDialogFragment
 import com.kasolution.verify.domain.supplier.model.Supplier
 import com.kasolution.verify.UI.Suppliers.viewModel.SuppliersViewModel
 import com.kasolution.verify.core.AppProvider
+import com.kasolution.verify.core.utils.BottomSheetHelper
 import com.kasolution.verify.core.utils.DialogHelper
 import com.kasolution.verify.core.utils.ProgressHelper
 import com.kasolution.verify.core.utils.ToastHelper
@@ -32,7 +32,6 @@ class SuppliersActivity : AppCompatActivity() {
     private lateinit var adapter: SupplierAdapter
     private lateinit var lista: ArrayList<Supplier>
     private var selectedSupplier: Supplier? = null
-    private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
     private val viewModel: SuppliersViewModel by viewModels {
         AppProvider.provideSuppliersViewModelFactory()
     }
@@ -41,13 +40,6 @@ class SuppliersActivity : AppCompatActivity() {
         binding= ActivitySuppliersBinding.inflate(layoutInflater)
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
-
-        bottomSheetBehavior = BottomSheetBehavior.from(binding.layoutOptions)
-        bottomSheetBehavior.apply {
-            isHideable = true
-            skipCollapsed = true
-            state = BottomSheetBehavior.STATE_HIDDEN // Inicia oculto
-        }
         setSupportActionBar(binding.actionBar)
         supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
@@ -55,7 +47,6 @@ class SuppliersActivity : AppCompatActivity() {
         }
         lista = ArrayList()
         initRecycler()
-        initBottonSheet()
         setupObservers()
 
         binding.etSearch.addTextChangedListener(object : TextWatcher {
@@ -75,27 +66,6 @@ class SuppliersActivity : AppCompatActivity() {
             dialogFragment.show(supportFragmentManager, "SupplierTag")
         }
 
-        binding.btnEditOption.setOnClickListener {
-            selectedSupplier?.let { proveedor ->
-                // Abrimos el diálogo enviando el objeto Supplier
-                val dialog = SuppliersFormDialogFragment.newInstance(proveedor)
-                dialog.show(supportFragmentManager, "EditSupplier")
-                hideOptions()
-            }
-        }
-
-        binding.btnDeleteOption.setOnClickListener {
-            selectedSupplier?.let { proveedor ->
-                DialogHelper.showConfirmation(
-                    this,
-                    "Eliminar Cuenta",
-                    "¿Estás seguro de que deseas eliminar a ${proveedor.nombre}?",
-                    onConfirm = {
-                        viewModel.deleteSupplier(proveedor.id)
-                        hideOptions()
-                    })
-            }
-        }
         binding.btnRetry.setOnClickListener {
             viewModel.loadSuppliers()
         }
@@ -117,48 +87,38 @@ class SuppliersActivity : AppCompatActivity() {
 
         adapter.onDataChanged(lista.isEmpty())
     }
-    private fun initBottonSheet() {
-        bottomSheetBehavior.addBottomSheetCallback(object :
-            BottomSheetBehavior.BottomSheetCallback() {
-            override fun onStateChanged(bottomSheet: View, newState: Int) {
-                if (newState == BottomSheetBehavior.STATE_HIDDEN) {
-                    adapter.clearSelection()
-                }
-            }
-
-            override fun onSlide(bottomSheet: View, slideOffset: Float) {
-                // Opcional: puedes cambiar la opacidad de un fondo oscuro aquí
-            }
-        })
-    }
     private fun onItemClicListener(supplier: Supplier) {
         //Toast.makeText(this, "${supplier.nombre} - ${supplier.usuario}", Toast.LENGTH_SHORT).show()
-        hideOptions()
     }
     private fun showOptionsFor(supplier: Supplier, position: Int) {
         binding.etSearch.clearFocus()
         selectedSupplier = supplier
-        binding.tvSelectedName.text = supplier.nombre
         adapter.setSelectedItem(position)
 
-        if (binding.layoutOptions.visibility != View.VISIBLE) {
-            binding.layoutOptions.visibility = View.VISIBLE
-        }
+        BottomSheetHelper.showInventoryOptions(
+            activity = this,
+            cabeceraName = "Proveedor",
+            name = supplier.nombre,
+            onEdit = {
+                val dialog = SuppliersFormDialogFragment.newInstance(supplier)
+                dialog.show(supportFragmentManager, "EditSupplier")
+            },
+            onDelete = {
+                DialogHelper.showConfirmation(
+                    this,
+                    "Eliminar Proveedor",
+                    "¿Estás seguro de que deseas eliminar a ${supplier.nombre}?",
+                    onConfirm = {
+                        viewModel.deleteSupplier(supplier.id)
+                    })
+            },
+            onDismiss = {
+                // Limpieza visual cuando el menú se va
+                selectedSupplier = null
+                adapter.clearSelection()
+            }
+        )
 
-        // En lugar de usar .animate(), usamos los estados del Behavior
-        if (bottomSheetBehavior.state != BottomSheetBehavior.STATE_EXPANDED) {
-            bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
-        } else {
-            // Animación sutil de feedback si ya estaba abierto (cambio de empleado)
-            binding.tvSelectedName.animate().scaleX(1.1f).scaleY(1.1f).setDuration(100)
-                .withEndAction {
-                    binding.tvSelectedName.animate().scaleX(1f).scaleY(1f).start()
-                }.start()
-        }
-    }
-    private fun hideOptions() {
-        adapter.clearSelection()
-        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
     }
 
     private fun setupObservers() {
@@ -169,7 +129,7 @@ class SuppliersActivity : AppCompatActivity() {
         }
         viewModel.exception.observe(this) { error ->
             mostrarMensajeOrLista(exito = false, mensaje = error)
-            ToastHelper.showCustomToast(binding.root, error, false)
+            ToastHelper.clasicCustomToast(binding.root, error, false)
         }
         viewModel.operationSuccess.observe(this) { action ->
             if (action.isNullOrEmpty()) return@observe
@@ -179,7 +139,7 @@ class SuppliersActivity : AppCompatActivity() {
                 "SUPPLIER_DELETE" -> "Proveedor eliminado"
                 else -> ""
             }
-            ToastHelper.showCustomToast(binding.root, mensaje, true)
+            ToastHelper.clasicCustomToast(binding.root, mensaje, true)
             binding.root.postDelayed({
                 viewModel.resetOperationStatus()
             }, 100)

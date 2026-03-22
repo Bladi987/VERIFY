@@ -23,7 +23,7 @@ class HistoryActivity : AppCompatActivity() {
 
     // El ViewModel se comparte con el BottomSheet mediante activityViewModels()
     private val viewModel: SalesViewModel by viewModels {
-        AppProvider.provideSalesViewModelFactory()
+        AppProvider.provideSalesViewModelFactory(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

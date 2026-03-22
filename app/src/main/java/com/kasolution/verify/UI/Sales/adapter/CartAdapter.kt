@@ -4,7 +4,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import com.kasolution.verify.domain.sales.model.CartItem
+import com.kasolution.verify.UI.Sales.model.CartItem
 import com.kasolution.verify.databinding.ItemVentaProductoBinding
 import java.util.Locale
 
@@ -12,7 +12,9 @@ class CartAdapter(
     private var cartList: MutableList<CartItem>,
     private val onIncrementClick: (CartItem, Int) -> Unit,
     private val onDecrementClick: (CartItem, Int) -> Unit,
-    private val onDeleteClick: (Int) -> Unit
+    private val onPriceEditClick: (CartItem, Int) -> Unit,
+    private val onDeleteClick: (Int) -> Unit,
+    private val onQuantityClick: (CartItem, Int) -> Unit,
 ) : RecyclerView.Adapter<CartAdapter.ViewHolder>() {
 
     inner class ViewHolder(private val binding: ItemVentaProductoBinding) :
@@ -21,10 +23,12 @@ class CartAdapter(
         // Quitamos 'position' de los parámetros de bind
         fun bind(item: CartItem) {
             // 1. Asignación de datos
-            binding.tvNombreVenta.text = item.producto.nombre
+            binding.tvNombreProducto.text = item.producto.nombre
             binding.tvPrecioUnitarioVenta.text = String.format(Locale.US, "S/ %.2f", item.producto.precioVenta)
-            binding.tvCantidadVenta.text = item.cantidad.toString()
+            binding.tvCantidad.text = item.cantidad.toString()
             binding.tvSubtotalVenta.text = String.format(Locale.US, "S/ %.2f", item.subtotal)
+            binding.tvCodBar.text = "Codigo: ${item.producto.codigo}"
+
 
             // 2. Eventos de botones usando bindingAdapterPosition
             // Esto garantiza que el clic siempre use el índice real actual
@@ -40,6 +44,12 @@ class CartAdapter(
                 if (currentPos != RecyclerView.NO_POSITION) {
                     onDecrementClick(item, currentPos)
                 }
+            }
+            binding.tvPrecioUnitarioVenta.setOnClickListener {
+                onPriceEditClick(item, bindingAdapterPosition)
+            }
+            binding.tvCantidad.setOnClickListener {
+                onQuantityClick(item, bindingAdapterPosition)
             }
 
             // 3. Evento de eliminación (LongClick)

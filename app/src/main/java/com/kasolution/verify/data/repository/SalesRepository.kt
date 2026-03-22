@@ -110,7 +110,7 @@ class SalesRepository(private val socketManager: SocketManager) {
             "id_empleado" to idEmpleado,
             "total" to total,
             "metodo_pago" to metodoPago.uppercase(),
-            "id_tipo_comprobante" to idTipoComprobante, // CAMBIO: Nombre de llave exacto para el PHP
+            "id_tipo_comprobante" to idTipoComprobante,
             "detalles" to detalles
         )
 

@@ -6,8 +6,7 @@ import androidx.lifecycle.ViewModel
 import com.kasolution.verify.data.local.SessionManager
 import com.kasolution.verify.domain.usecases.Session.LogoutUseCase
 
-class DashboardViewModel(
-    private val sessionManager: SessionManager, private val logoutUseCase: LogoutUseCase
+class DashboardViewModel(sessionManager: SessionManager, private val logoutUseCase: LogoutUseCase
 ) : ViewModel() {
 
     val userName: String = sessionManager.getUserName()

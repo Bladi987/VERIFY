@@ -17,7 +17,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.widget.addTextChangedListener
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.kasolution.verify.R
 import com.kasolution.verify.UI.Components.Scanner.ScannerActivity
+import com.kasolution.verify.UI.Purchase.model.PurchaseItem
 import com.kasolution.verify.UI.Sales.adapter.CartAdapter
 import com.kasolution.verify.UI.Sales.adapter.SearchClienteAdapter
 import com.kasolution.verify.UI.Sales.adapter.SearchProductAdapter
@@ -31,7 +33,7 @@ import com.kasolution.verify.databinding.ActivitySalesBinding
 import com.kasolution.verify.databinding.DialogPagoBinding
 import com.kasolution.verify.domain.Inventory.model.Product
 import com.kasolution.verify.domain.clients.model.Client
-import com.kasolution.verify.domain.sales.model.CartItem
+import com.kasolution.verify.UI.Sales.model.CartItem
 import java.util.Locale
 
 class SalesActivity : AppCompatActivity() {
@@ -41,33 +43,24 @@ class SalesActivity : AppCompatActivity() {
 
     private var listaMaestra = listOf<Product>()
     private var listaClientes = listOf<Client>()
-    private var clienteSeleccionado: Client? = null
     private var idTipoComprobanteSeleccionado = 1
 
     private val viewModel: SalesViewModel by viewModels {
-        AppProvider.provideSalesViewModelFactory()
+        AppProvider.provideSalesViewModelFactory(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivitySalesBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        val filter = IntentFilter().apply {
-            addAction("ACTION_PRODUCT_SCANNED")
-            addAction("ACTION_CLEAR_CART")
-        }
-
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(scannerReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
-        } else {
-            @Suppress("UnspecifiedRegisterReceiverFlag")
-            registerReceiver(scannerReceiver, filter)
-        }
+        setupScannerReceiver()
         setupBackPressedHandling()
         initialRecycler()
         setupObservers()
+        setupListeners()
+    }
 
+    private fun setupListeners() {
         binding.btnCobrar.setOnClickListener {
             // El total ahora viene del LiveData del ViewModel
             val total = viewModel.totalVenta.value ?: 0.0
@@ -91,12 +84,25 @@ class SalesActivity : AppCompatActivity() {
                 onConfirm = {
                     viewModel.clearCart() // Tu función que ya limpia la lista y el total
 
-                    ToastHelper.clasicCustomToast(binding.root, "Venta cancelada", true)
+                    ToastHelper.clasicCustomToast(binding.root, "Carro vacio", true)
                 }
             )
         }
         binding.tilBuscarVenta.isEndIconVisible = false
+    }
 
+    private fun setupScannerReceiver() {
+        val filter = IntentFilter().apply {
+            addAction("ACTION_PRODUCT_SCANNED")
+            addAction("ACTION_CLEAR_CART")
+        }
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(scannerReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            registerReceiver(scannerReceiver, filter)
+        }
     }
 
     private fun initialRecycler() {
@@ -113,9 +119,15 @@ class SalesActivity : AppCompatActivity() {
                     confirmarEliminacion(item)
                 }
             },
+            onPriceEditClick = { item, _ ->
+                showPriceDialog(item)
+            },
             onDeleteClick = { position ->
                 val item = viewModel.cartList.value?.getOrNull(position)
                 item?.let { confirmarEliminacion(it) }
+            },
+            onQuantityClick = { cartitem, cantidad ->
+                showQuantityDialog(cartitem, cantidad)
             }
         )
 
@@ -131,8 +143,9 @@ class SalesActivity : AppCompatActivity() {
             val tieneProductos = nuevaLista.isNotEmpty()
             binding.tilBuscarVenta.isEndIconVisible = tieneProductos
             adapterVenta.updateList(nuevaLista) // Usa el DiffUtil que creamos
-            // Si el carrito está vacío, podrías mostrar un texto de "Carrito vacío"
-            binding.tvTotalPagar.visibility = if (nuevaLista.isEmpty()) View.GONE else View.VISIBLE
+            viewModel.totalVenta.observe(this) { total ->
+                binding.tvTotalPagar.text = String.format(Locale.US, "S/ %.2f", total)
+            }
 
             // Actualizar el botón de cobrar
             binding.btnCobrar.isEnabled = nuevaLista.isNotEmpty()
@@ -177,6 +190,28 @@ class SalesActivity : AppCompatActivity() {
             else ProgressHelper.hideProgress()
         }
     }
+    private fun showPriceDialog(item: CartItem) {
+        DialogHelper.showPriceDialog(
+            context = this,
+            productName = item.producto.nombre,
+            currentPrice = item.producto.precioVenta,
+            colorRes = R.color.blue_clients
+        ) { nuevoPrecio ->
+            // Este bloque (lambda) se ejecuta solo cuando el usuario da a "ACTUALIZAR"
+            viewModel.updatePrice(item.producto.id, nuevoPrecio)
+        }
+    }
+
+    private fun showQuantityDialog(item: CartItem, position: Int) {
+        DialogHelper.showQuantityDialog(
+            context = this,
+            productName = item.producto.nombre,
+            currentQuantity = item.cantidad,
+            colorRes = R.color.blue_clients
+        ) { nuevaCantidad ->
+            viewModel.updateQuantity(item.producto.id, nuevaCantidad)
+        }
+    }
     private fun mostrarTicket() {
         val ticketSheet = SaleDetailSheet()
         // Usamos supportFragmentManager porque estamos en una Activity
@@ -200,14 +235,14 @@ class SalesActivity : AppCompatActivity() {
 
 
     private fun confirmarEliminacion(item: CartItem) {
-        AlertDialog.Builder(this)
-            .setTitle("Quitar producto")
-            .setMessage("¿Deseas quitar ${item.producto.nombre}?")
-            .setPositiveButton("Eliminar") { _, _ ->
+        DialogHelper.showConfirmation(
+            context = this,
+            title = "Eliminar Producto",
+            message = "¿Deseas quitar ${item.producto.nombre}?",
+            onConfirm = {
                 viewModel.removeItem(item.producto.id)
             }
-            .setNegativeButton("Cancelar", null)
-            .show()
+        )
     }
 
     private fun actualizarTotalUI(lista: List<CartItem>) {
@@ -218,18 +253,15 @@ class SalesActivity : AppCompatActivity() {
     }
 
     private fun mostrarDialogoPago(total: Double) {
-        val dialogBinding = DialogPagoBinding.inflate(layoutInflater)
-        val builder = AlertDialog.Builder(this)
-        builder.setView(dialogBinding.root)
-        builder.setCancelable(false)
-
-        val alertDialog = builder.create()
         var clienteDelDialogo: Client? = null
-        idTipoComprobanteSeleccionado = 1 // Reset a Boleta al abrir
+        idTipoComprobanteSeleccionado = 1
+        val binding = DialogPagoBinding.inflate(layoutInflater)
+        val dialog = DialogHelper.createBaseDialog(this, binding.root)
+
 
         // 1. Configurar Buscador de Clientes
         val clienteAdapter = SearchClienteAdapter(this, listaClientes)
-        dialogBinding.actvBuscarCliente.apply {
+        binding.actvBuscarCliente.apply {
             setAdapter(clienteAdapter)
             setOnItemClickListener { parent, _, position, _ ->
 
@@ -242,134 +274,154 @@ class SalesActivity : AppCompatActivity() {
                     setText(cliente.dniRuc, false)
 
                     // 2. Llenamos automáticamente la Razón Social con el nombre del cliente
-                    dialogBinding.etRazonSocial.setText(cliente.nombre)
+                    binding.etRazonSocial.setText(cliente.nombre)
 
                     // 3. Limpiamos errores visuales si existían
-                    dialogBinding.tilBuscarCliente.error = null
-                    dialogBinding.tilRazonSocial.error = null
+                    binding.tilBuscarCliente.error = null
+                    binding.tilRazonSocial.error = null
                 } else {
                     // Para Boleta o Ticket, también mantenemos el número en el campo
                     setText(cliente.dniRuc, false)
                 }
                 hideKeyboard()
-                dialogBinding.tilBuscarCliente.error = null
+                binding.tilBuscarCliente.error = null
             }
         }
 
         // 2. Lógica de Selección de Comprobante (NUEVO)
-        dialogBinding.toggleTipoComprobante.addOnButtonCheckedListener { _, checkedId, isChecked ->
+        binding.toggleTipoComprobante.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {
                 when (checkedId) {
-                    dialogBinding.btnBoleta.id -> {
+                    binding.btnBoleta.id -> {
                         idTipoComprobanteSeleccionado = 1
-                        dialogBinding.actvBuscarCliente.inputType = android.text.InputType.TYPE_CLASS_TEXT
-                        dialogBinding.tilBuscarCliente.hint = "DNI / Cliente"
-                        dialogBinding.tilRazonSocial.visibility = View.GONE
+                        binding.actvBuscarCliente.inputType =
+                            android.text.InputType.TYPE_CLASS_TEXT
+                        binding.tilBuscarCliente.hint = "DNI / Cliente"
+                        binding.tilRazonSocial.visibility = View.GONE
                     }
-                    dialogBinding.btnFactura.id -> {
+
+                    binding.btnFactura.id -> {
                         idTipoComprobanteSeleccionado = 2
-                        dialogBinding.actvBuscarCliente.inputType = android.text.InputType.TYPE_CLASS_NUMBER
-                        dialogBinding.tilBuscarCliente.hint = "RUC (11 dígitos)"
-                        dialogBinding.tilRazonSocial.visibility = View.VISIBLE
+                        binding.actvBuscarCliente.inputType =
+                            android.text.InputType.TYPE_CLASS_NUMBER
+                        binding.tilBuscarCliente.hint = "RUC (11 dígitos)"
+                        binding.tilRazonSocial.visibility = View.VISIBLE
                     }
-                    dialogBinding.btnTicket.id -> {
+
+                    binding.btnTicket.id -> {
                         idTipoComprobanteSeleccionado = 3
-                        dialogBinding.actvBuscarCliente.inputType = android.text.InputType.TYPE_CLASS_TEXT
-                        dialogBinding.tilBuscarCliente.hint = "Cliente (Opcional)"
-                        dialogBinding.tilRazonSocial.visibility = View.GONE
+                        binding.actvBuscarCliente.inputType =
+                            android.text.InputType.TYPE_CLASS_TEXT
+                        binding.tilBuscarCliente.hint = "Cliente (Opcional)"
+                        binding.tilRazonSocial.visibility = View.GONE
                     }
                 }
             }
         }
 
         // 3. Lógica de Montos y Vuelto (Se mantiene y mejora)
-        dialogBinding.tvTotalDialogo.text = String.format(Locale.US, "Total a pagar: S/ %.2f", total)
+        binding.tvTotalDialogo.text =
+            String.format(Locale.US, "S/ %.2f", total)
 
         fun validarPago() {
-            val montoTexto = dialogBinding.etMontoRecibido.text.toString()
+            val montoTexto = binding.etMontoRecibido.text.toString()
             val recibido = montoTexto.toDoubleOrNull() ?: 0.0
-            val esTarjeta = dialogBinding.toggleMetodoPago.checkedButtonId == dialogBinding.btnTarjeta.id
+            val esTarjeta =
+                binding.toggleMetodoPago.checkedButtonId == binding.btnTarjeta.id
             val vuelto = recibido - total
 
             if (esTarjeta) {
-                dialogBinding.tvVuelto.text = "Pago con Tarjeta"
-                dialogBinding.tvVuelto.setTextColor(Color.GRAY)
-                dialogBinding.btnConfirmarPago.isEnabled = true
+                binding.tvVuelto.text = "Pago con Tarjeta"
+                binding.tvVuelto.setTextColor(Color.GRAY)
+                binding.btnConfirmarPago.isEnabled = true
             } else {
                 if (vuelto >= 0) {
-                    dialogBinding.tvVuelto.text = String.format(Locale.US, "Vuelto: S/ %.2f", vuelto)
-                    dialogBinding.tvVuelto.setTextColor(Color.parseColor("#4CAF50"))
-                    dialogBinding.btnConfirmarPago.isEnabled = true
+                    binding.tvVuelto.text =
+                        String.format(Locale.US, "Vuelto: S/ %.2f", vuelto)
+                    binding.tvVuelto.setTextColor(Color.parseColor("#4CAF50"))
+                    binding.btnConfirmarPago.isEnabled = true
                 } else {
-                    dialogBinding.tvVuelto.text = String.format(Locale.US, "Falta: S/ %.2f", Math.abs(vuelto))
-                    dialogBinding.tvVuelto.setTextColor(Color.RED)
-                    dialogBinding.btnConfirmarPago.isEnabled = false
+                    binding.tvVuelto.text =
+                        String.format(Locale.US, "Falta: S/ %.2f", Math.abs(vuelto))
+                    binding.tvVuelto.setTextColor(Color.RED)
+                    binding.btnConfirmarPago.isEnabled = false
                 }
             }
         }
 
         // Listeners de montos rápidos
         fun setMontoRapido(monto: Double) {
-            dialogBinding.etMontoRecibido.setText(String.format(Locale.US, "%.2f", monto))
-            dialogBinding.etMontoRecibido.setSelection(dialogBinding.etMontoRecibido.text?.length ?: 0)
+            binding.etMontoRecibido.setText(String.format(Locale.US, "%.2f", monto))
+            binding.etMontoRecibido.setSelection(
+                binding.etMontoRecibido.text?.length ?: 0
+            )
             validarPago()
         }
 
-        dialogBinding.btnExacto.setOnClickListener { setMontoRapido(total) }
-        dialogBinding.btnMonto10.setOnClickListener { setMontoRapido(10.0) }
-        dialogBinding.btnMonto20.setOnClickListener { setMontoRapido(20.0) }
-        dialogBinding.btnMonto50.setOnClickListener { setMontoRapido(50.0) }
-        dialogBinding.btnMonto100.setOnClickListener { setMontoRapido(100.0) }
+        binding.btnExacto.setOnClickListener { setMontoRapido(total) }
+        binding.btnMonto10.setOnClickListener { setMontoRapido(10.0) }
+        binding.btnMonto20.setOnClickListener { setMontoRapido(20.0) }
+        binding.btnMonto50.setOnClickListener { setMontoRapido(50.0) }
+        binding.btnMonto100.setOnClickListener { setMontoRapido(100.0) }
 
-        dialogBinding.etMontoRecibido.addTextChangedListener { validarPago() }
-        dialogBinding.toggleMetodoPago.addOnButtonCheckedListener { _, checkedId, isChecked ->
+        binding.etMontoRecibido.addTextChangedListener { validarPago() }
+        binding.toggleMetodoPago.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {
-                val esTarjeta = checkedId == dialogBinding.btnTarjeta.id
-                dialogBinding.containerEfectivo.visibility = if (esTarjeta) View.GONE else View.VISIBLE
+                val esTarjeta = checkedId == binding.btnTarjeta.id
+                binding.containerEfectivo.visibility =
+                    if (esTarjeta) View.GONE else View.VISIBLE
                 validarPago()
             }
         }
 
         // 4. Botón Finalizar con Validaciones de Factura
-        dialogBinding.btnConfirmarPago.setOnClickListener {
-            val documento = dialogBinding.actvBuscarCliente.text.toString()
-            val razonSocial = dialogBinding.etRazonSocial.text.toString()
+        binding.btnConfirmarPago.setOnClickListener {
+            val documento = binding.actvBuscarCliente.text.toString()
+            val razonSocial = binding.etRazonSocial.text.toString()
 
             // Validaciones para Factura
             if (idTipoComprobanteSeleccionado == 2) {
                 if (documento.length != 11) {
-                    dialogBinding.tilBuscarCliente.error = "El RUC debe tener 11 dígitos"
+                    binding.tilBuscarCliente.error = "El RUC debe tener 11 dígitos"
                     return@setOnClickListener
                 }
                 if (razonSocial.isEmpty()) {
-                    dialogBinding.tilRazonSocial.error = "Ingrese Razón Social"
+                    binding.tilRazonSocial.error = "Ingrese Razón Social"
                     return@setOnClickListener
                 }
             }
 
-            val metodo = if (dialogBinding.toggleMetodoPago.checkedButtonId == dialogBinding.btnTarjeta.id)
-                "TARJETA" else "EFECTIVO"
+            val metodo =
+                if (binding.toggleMetodoPago.checkedButtonId == binding.btnTarjeta.id)
+                    "TARJETA" else "EFECTIVO"
 
             // Llamada final al ViewModel
             viewModel.saveSale(
                 idCliente = clienteDelDialogo?.id,
-                idEmpleado = 1, // Cambiar por ID de sesión real
+                idEmpleado = viewModel.userId,
                 metodoPago = metodo,
                 idTipoComprobante = idTipoComprobanteSeleccionado
             )
 
-            alertDialog.dismiss()
+            dialog.dismiss()
         }
 
-        dialogBinding.btnCancelarPago.setOnClickListener { alertDialog.dismiss() }
-
-        alertDialog.show()
+        binding.btnCancelarPago.setOnClickListener {
+            DialogHelper.showConfirmation(
+                context = this,
+                title = "Cancelar Venta",
+                message = "¿Estás seguro de que deseas cancelar la venta?",
+                onConfirm = {
+                    ToastHelper.clasicCustomToast(binding.root, "Venta cancelada", true)
+                    dialog.dismiss() })
+        }
+        dialog.show()
     }
 
     private val scannerReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            when (intent?.action){
-                "ACTION_PRODUCT_SCANNED"->{
+            when (intent?.action) {
+                "ACTION_PRODUCT_SCANNED" -> {
                     val codigoSaneado = intent.getStringExtra("SCAN_RESULT_CODE") ?: return
                     // Buscamos en el LiveData del VM directamente
                     val producto = viewModel.productsList.value?.find { it.codigo == codigoSaneado }
@@ -377,19 +429,24 @@ class SalesActivity : AppCompatActivity() {
                     if (producto != null) {
                         // USAR postValue o runOnUiThread es vital aquí
                         viewModel.addProductToCart(producto)
-                        Log.d("SCANNER_DEBUG", "Producto encontrado y enviado al VM: ${producto.nombre}")
+                        Log.d(
+                            "SCANNER_DEBUG",
+                            "Producto encontrado y enviado al VM: ${producto.nombre}"
+                        )
                     } else {
                         Log.e("SCANNER_DEBUG", "Código $codigoSaneado no existe en la lista del VM")
                     }
                 }
-                "ACTION_CLEAR_CART"-> {
+
+                "ACTION_CLEAR_CART" -> {
                     Log.d("SCANNER_DEBUG", "Recibido ACTION_CLEAR_CART")
                     viewModel.clearCart()
-                    ToastHelper.clasicCustomToast(binding.root,"Carrito vacio",true)
+                    ToastHelper.clasicCustomToast(binding.root, "Carrito vacio", true)
                 }
             }
         }
     }
+
     private fun setupBackPressedHandling() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {

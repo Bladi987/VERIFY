@@ -17,7 +17,7 @@ class ScannerViewModel(private val repository: InventoryRepository) : ViewModel(
     init {
         // Configuramos el repositorio para que cuando llegue la lista (o el producto)
         // el ViewModel reaccione.
-        repository.onInventoryListReceived = { productos ->
+        repository.onProductsListReceived = { productos ->
             // Buscamos el código que activó la búsqueda
             // Nota: En una versión pro, podrías pedir un PRODUCT_GET_BY_CODE al server
             // pero, si ya tienes la lista en el repo, buscamos aquí.
@@ -26,6 +26,7 @@ class ScannerViewModel(private val repository: InventoryRepository) : ViewModel(
                 _productFound.postValue(p)
             }
         }
+
     }
 
     private var lastSearchCode: String? = null
@@ -35,4 +36,5 @@ class ScannerViewModel(private val repository: InventoryRepository) : ViewModel(
         // Pedimos al servidor que actualice o simplemente usamos la lista local si el repo la tiene
         repository.getProducts()
     }
+
 }

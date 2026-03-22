@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.text.InputFilter
 import android.util.Log
+import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,6 +16,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import com.google.android.material.textfield.TextInputEditText
+import com.kasolution.verify.R
 import com.kasolution.verify.domain.Inventory.model.Category
 import com.kasolution.verify.UI.Components.Scanner.ScannerActivity
 import com.kasolution.verify.UI.Inventory.adapter.GenericDropDownAdapter
@@ -44,7 +46,7 @@ class ProductFormDialogFragment : DialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
         val product = arguments?.getParcelable<Product>(ARG_PRODUCT)
         setupCurrencyFormatting(binding.etPrecioCompra)
         setupCurrencyFormatting(binding.etPrecioVenta)
@@ -52,130 +54,117 @@ class ProductFormDialogFragment : DialogFragment() {
             //MODO EDICION
             binding.tvDialogTitle.text = "Modificar Producto"
             binding.btnSaveProduct.setText("GUARDAR CAMBIOS")
-            binding.etCodigoProducto.setText(product.codigo)
-            binding.etNombreProducto.setText(product.nombre)
-            binding.etPrecioCompra.setText(String.format("%.2f", product.precioCompra))
-            binding.etPrecioVenta.setText(String.format("%.2f", product.precioVenta))
-            binding.spCategoria.setText(product.nombreCategoria)
-            binding.spProveedor.setText(product.nombreProveedor)
-            binding.etStockInicial.setText(product.stock.toString())
-            binding.etUnidadMedida.setText(product.unidadMedida)
-            idCategoriaSeleccionada = product.idCategoria
-            idProveedorSeleccionado = product.idProveedor
+
+            product.let {
+                binding.etCodigoProducto.setText(it.codigo)
+                binding.etNombreProducto.setText(it.nombre)
+                binding.etPrecioCompra.setText(String.format("%.2f", it.precioCompra))
+                binding.etPrecioVenta.setText(String.format("%.2f", it.precioVenta))
+                binding.spCategoria.setText(it.nombreCategoria, false)
+                binding.spProveedor.setText(it.nombreProveedor, false)
+                binding.etStockInicial.setText(it.stock.toString())
+                binding.etUnidadMedida.setText(it.unidadMedida)
+                idCategoriaSeleccionada = it.idCategoria
+                idProveedorSeleccionado = it.idProveedor
+            }
 
         }
         binding.btnSaveProduct.setOnClickListener {
-            val id = if (product?.id != null) product.id else 0
-            val codigo = binding.etCodigoProducto.text.toString().trim()
-            val nombre = binding.etNombreProducto.text.toString().trim()
-            val precioCompra = binding.etPrecioCompra.text.toString().trim()
-            val precioVenta = binding.etPrecioVenta.text.toString().trim()
-            val categoria = binding.spCategoria.text.toString().trim()
-            val proveedor = binding.spProveedor.text.toString().trim()
-            val stockInicial = binding.etStockInicial.text.toString().trim()
-            val unidadMedida = binding.etUnidadMedida.text.toString().trim()
-
-
-            if (validar(
-                    codigo,
-                    nombre,
-                    precioCompra,
-                    precioVenta,
-                    categoria,
-                    proveedor,
-                    stockInicial,
-                    unidadMedida
-                )
-            ) {
-                if (product != null) {
-                    viewModel.updateProduct(
-                        id = id,
-                        codigo = codigo,
-                        nombre = nombre,
-                        idCategoria = idCategoriaSeleccionada,
-                        idProveedor = idProveedorSeleccionado,
-                        precioCompra = precioCompra.toDouble(),
-                        precioVenta = precioVenta.toDouble(),
-                        stock = stockInicial.toInt(),
-                        unidadMedida = unidadMedida,
-                        estado = true
-                    )
-                } else {
-                    viewModel.saveProduct(
-                        codigo = codigo,
-                        nombre = nombre,
-                        idCategoria = idCategoriaSeleccionada,
-                        idProveedor = idProveedorSeleccionado,
-                        precioCompra = precioCompra.toDouble(),
-                        precioVenta = precioVenta.toDouble(),
-                        stock = stockInicial.toInt(),
-                        unidadMedida = unidadMedida,
-                        estado = true
-                    )
-                }
-            }
+            prepararYEnviar(product)
         }
         binding.tilCategoria.setEndIconOnClickListener {
-            it.hideKeyboard()
-            addCategorySheet = AddCategorySheet { nombre, descripcion ->
-                // Llamamos al ViewModel para guardar la nueva categoría
-                viewModel.saveCategory(nombre, descripcion)
-            }
-            addCategorySheet?.show(parentFragmentManager, "AddCategorySheet")
+            it.setKeyboardVisibility(false)
+            abrirNuevaCategoria()
         }
         binding.tilCodigoProducto.setEndIconOnClickListener {
             barcodeLauncher.launch(Intent(requireContext(), ScannerActivity::class.java))
         }
 
-        binding.spCategoria.apply {
-            // 1. Al hacer clic directamente
-            setOnClickListener {
-                it.hideKeyboard()
-            }
-
-            // 2. Al recibir el foco desde otro campo (ej. usando el botón 'Siguiente' del teclado)
-            setOnFocusChangeListener { view, hasFocus ->
-                if (hasFocus) {
-                    view.hideKeyboard()
-                    // Esto asegura que la lista se despliegue de inmediato al llegar al campo
-                    (view as? AutoCompleteTextView)?.showDropDown()
-                }
-            }
-        }
-        binding.spProveedor.apply {
-            // 1. Al hacer clic directamente
-            setOnClickListener {
-                it.hideKeyboard()
-            }
-
-            // 2. Al recibir el foco desde otro campo (ej. usando el botón 'Siguiente' del teclado)
-            setOnFocusChangeListener { view, hasFocus ->
-                if (hasFocus) {
-                    view.hideKeyboard()
-                    // Esto asegura que la lista se despliegue de inmediato al llegar al campo
-                    (view as? AutoCompleteTextView)?.showDropDown()
-                }
-            }
-        }
-
+        setupDropdownFocus()
         setupObservers()
     }
 
-    private fun setupObservers() {
-        viewModel.suppliersList.observe(viewLifecycleOwner) { lista ->
-            Log.d(TAG, "Lista de proveedores recibida: $lista")
-            setupSelectorProveedor(lista)
-        }
-        viewModel.categoryList.observe(viewLifecycleOwner) { lista ->
-            setupSelectorCategoria(lista)
-            Log.d(TAG, "Lista de categorias recibida: $lista")
-        }
-        // Escuchar si hay errores específicos al guardar
-        viewModel.exception.observe(viewLifecycleOwner) { error ->
-            if (error.isNotEmpty()) {
-                ToastHelper.showCustomToast(binding.root, error, false)
+    private fun prepararYEnviar(existingProduct: Product?) {
+        val codigo = binding.etCodigoProducto.text.toString().trim()
+        val nombre = binding.etNombreProducto.text.toString().trim()
+        val pCompra = binding.etPrecioCompra.text.toString().trim()
+        val pVenta = binding.etPrecioVenta.text.toString().trim()
+        val categoria = binding.spCategoria.text.toString().trim()
+        val proveedor = binding.spProveedor.text.toString().trim()
+        val stock = binding.etStockInicial.text.toString().trim()
+        val unidad = binding.etUnidadMedida.text.toString().trim()
+
+        if (validar(codigo, nombre, pCompra, pVenta, categoria, proveedor, stock, unidad)) {
+            // Creamos el objeto de dominio directamente (como en Clientes)
+            val productToSave = Product(
+                id = existingProduct?.id ?: 0,
+                codigo = codigo,
+                nombre = nombre,
+                idCategoria = idCategoriaSeleccionada,
+                idProveedor = idProveedorSeleccionado,
+                precioCompra = pCompra.toDoubleOrNull() ?: 0.0,
+                precioVenta = pVenta.toDoubleOrNull() ?: 0.0,
+                stock = stock.toIntOrNull() ?: 0,
+                unidadMedida = unidad,
+                estado = true // O el estado que desees manejar
+            )
+
+            if (existingProduct != null) {
+                viewModel.updateProduct(productToSave)
+            } else {
+                viewModel.saveProduct(productToSave)
             }
         }
+    }
+    private fun abrirNuevaCategoria() {
+        addCategorySheet = AddCategorySheet { nombre, descripcion ->
+            viewModel.saveCategory(nombre, descripcion)
+        }
+        addCategorySheet?.show(parentFragmentManager, "AddCategorySheet")
+    }
+    private fun setupDropdownFocus() {
+        listOf(binding.spCategoria, binding.spProveedor).forEach { spinner ->
+            spinner.setOnClickListener { it.setKeyboardVisibility(false) }
+            spinner.setOnFocusChangeListener { v, hasFocus ->
+                if (hasFocus) {
+                    v.setKeyboardVisibility(false)
+                    (v as? AutoCompleteTextView)?.showDropDown()
+                }
+            }
+        }
+    }
+    private fun setupSelectorProveedor(proveedores: List<Supplier>) {
+        val adapter = GenericDropDownAdapter(requireContext(), proveedores) { it.nombre }
+        binding.spProveedor.setAdapter(adapter)
+        binding.spProveedor.setOnItemClickListener { parent, _, pos, _ ->
+            idProveedorSeleccionado = (parent.getItemAtPosition(pos) as Supplier).id
+            binding.tilProveedor.error = null
+        }
+    }
+
+    private fun setupSelectorCategoria(categorias: List<Category>) {
+        val adapter = GenericDropDownAdapter(requireContext(), categorias) { it.nombre }
+        binding.spCategoria.setAdapter(adapter)
+        binding.spCategoria.setOnItemClickListener { parent, _, pos, _ ->
+            idCategoriaSeleccionada = (parent.getItemAtPosition(pos) as Category).id
+            binding.tilCategoria.error = null
+        }
+    }
+
+
+    private fun setupObservers() {
+        // Listas para Spinners
+        viewModel.suppliersList.observe(viewLifecycleOwner) { setupSelectorProveedor(it) }
+        viewModel.categoryList.observe(viewLifecycleOwner) { setupSelectorCategoria(it) }
+
+        // Estado de carga y errores
+        viewModel.isLoading.observe(viewLifecycleOwner) { binding.btnSaveProduct.setLoading(it) }
+
+        viewModel.exception.observe(viewLifecycleOwner) {
+            dismiss()
+        }
+
+        // Éxito de operación (Alineado con Clientes)
         viewModel.operationSuccess.observe(viewLifecycleOwner) { accion ->
             if (accion.isNullOrEmpty()) return@observe
 
@@ -183,110 +172,47 @@ class ProductFormDialogFragment : DialogFragment() {
                 "CATEGORY_SAVE" -> {
                     addCategorySheet?.dismiss()
                     addCategorySheet = null
-                    viewModel.resetOperationStatus() // Limpiar para que no afecte al diálogo padre
+                    // No reseteamos el estado aquí para permitir que el flujo principal continúe
                 }
                 "PRODUCT_SAVE", "PRODUCT_UPDATE" -> {
-                    // Toast de éxito antes de cerrar
-                    ToastHelper.showCustomToast(binding.root, "Producto guardado con éxito", true)
-
-                    // Limpiamos el estado ANTES de cerrar para que la siguiente vez que se abra esté limpio
+                    ToastHelper.showCustomToast(binding.root, "Producto guardado", true)
                     viewModel.resetOperationStatus()
                     dismiss()
                 }
             }
         }
-        viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
-            binding.btnSaveProduct.setLoading(isLoading)
-        }
-
     }
 
-    private fun validar(
-        codBar: String,
-        nombre: String,
-        pcompra: String,
-        pventa: String,
-        categoria: String,
-        proveedor: String,
-        sinicial: String,
-        umedida: String
-    ): Boolean {
+    private fun validar(cod: String, nom: String, pc: String, pv: String, cat: String, prov: String, st: String, un: String): Boolean {
+        var isValid = true
+        // Limpiar errores
         binding.run {
-            tilCodigoProducto.error = null
-            tilNombreProducto.error = null
-            tilPrecioCompra.error = null
-            tilPrecioVenta.error = null
-            tilCategoria.error = null
-            tilProveedor.error = null
-            tilStockInicial.error = null
-            tilUnidadMedida.error = null
+            tilCodigoProducto.error = null; tilNombreProducto.error = null
+            tilPrecioCompra.error = null; tilPrecioVenta.error = null
+            tilCategoria.error = null; tilProveedor.error = null
+            tilStockInicial.error = null; tilUnidadMedida.error = null
+        }
 
-        }
-        if (codBar.isBlank()) {
-            binding.tilCodigoProducto.error = "El codigo es obligatorio"
-            return false
-        }
-        if (nombre.isBlank()) {
-            binding.tilNombreProducto.error = "El nombre es obligatorio"
-            return false
-        }
-        if (pcompra.isBlank()) {
-            binding.tilPrecioCompra.error = "El precio de compra es obligatorio"
-            return false
-        }
-        if (pventa.isBlank()) {
-            binding.tilPrecioVenta.error = "El precio de venta es obligatorio"
-            return false
-        }
-        if (categoria.isBlank()) {
-            binding.tilCategoria.error = "La categoria es obligatoria"
-            return false
-        }
-        if (proveedor.isBlank()) {
-            binding.tilProveedor.error = "El proveedor es obligatorio"
-            return false
-        }
-        if (sinicial.isBlank()) {
-            binding.tilStockInicial.error = "El stock inicial es obligatorio"
-            return false
-        }
-        if (umedida.isBlank()) {
-            binding.tilUnidadMedida.error = "La unidad de medida es obligatoria"
-            return false
-        }
-        return true
+        if (cod.isBlank()) { binding.tilCodigoProducto.error = "Obligatorio"; isValid = false }
+        if (nom.isBlank()) { binding.tilNombreProducto.error = "Obligatorio"; isValid = false }
+        if (pc.isBlank()) { binding.tilPrecioCompra.error = "Obligatorio"; isValid = false }
+        if (pv.isBlank()) { binding.tilPrecioVenta.error = "Obligatorio"; isValid = false }
+        if (cat.isBlank()) { binding.tilCategoria.error = "Obligatorio"; isValid = false }
+        if (prov.isBlank()) { binding.tilProveedor.error = "Obligatorio"; isValid = false }
+        if (st.isBlank()) { binding.tilStockInicial.error = "Obligatorio"; isValid = false }
+        if (un.isBlank()) { binding.tilUnidadMedida.error = "Obligatorio"; isValid = false }
+
+        return isValid
     }
 
-    private fun setupSelectorProveedor(proveedores: List<Supplier>) {
-
-        // Configurar Adaptador de Proveedores
-        val provAdapter = GenericDropDownAdapter(requireContext(), proveedores) { it.nombre }
-        binding.spProveedor.setAdapter(provAdapter)
-
-        binding.spProveedor.setOnItemClickListener { parent, _, position, _ ->
-            val supplier = parent.getItemAtPosition(position) as Supplier
-
-            idProveedorSeleccionado = supplier.id // Capturamos el ID
-            binding.tilProveedor.error = null
-        }
-    }
-
-    private fun setupSelectorCategoria(categorias: List<Category>) {
-
-        // Configurar Adaptador de Categorías
-        val catAdapter = GenericDropDownAdapter(requireContext(), categorias) { it.nombre }
-        binding.spCategoria.setAdapter(catAdapter)
-
-        binding.spCategoria.setOnItemClickListener { parent, _, position, _ ->
-            val category = parent.getItemAtPosition(position) as Category
-            idCategoriaSeleccionada = category.id // Capturamos el ID
-            binding.tilCategoria.error = null // Limpiamos errores visuales
-        }
-    }
     private val barcodeLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val codigoEscaneado = result.data?.getStringExtra("SCAN_RESULT")
             binding.etCodigoProducto.setText(codigoEscaneado) // Ponemos el código en el campo
+            binding.etNombreProducto.requestFocus()
+            binding.etNombreProducto.postDelayed({
+                binding.etNombreProducto.setKeyboardVisibility(show = true)
+            }, 150)
         }
     }
 
@@ -317,10 +243,14 @@ class ProductFormDialogFragment : DialogFragment() {
             }
         }
     }
-
-    fun View.hideKeyboard() {
+    fun View.setKeyboardVisibility(show: Boolean) {
         val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.hideSoftInputFromWindow(windowToken, 0)
+        if (show) {
+            this.requestFocus()
+            imm.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
+        } else {
+            imm.hideSoftInputFromWindow(windowToken, 0)
+        }
     }
     override fun onDestroyView() {
         super.onDestroyView()
@@ -337,8 +267,11 @@ class ProductFormDialogFragment : DialogFragment() {
             )
             // Opcional: Quitar el fondo por defecto de Android para que se vea tu fondo redondeado
             setBackgroundDrawableResource(android.R.color.transparent)
+            setWindowAnimations(R.style.AnimationiOSDialog)
         }
     }
+
+
 
     companion object {
         private const val ARG_PRODUCT = "product_data"

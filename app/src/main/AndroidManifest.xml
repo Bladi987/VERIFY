@@ -36,6 +36,9 @@
             android:name=".UI.Sales.History.HistoryActivity"
             android:exported="false" />
         <activity
+            android:name=".UI.Purchase.history.PurchaseHistoryActivity"
+            android:exported="false" />
+        <activity
             android:name=".UI.Components.Scanner.ScannerActivity"
             android:exported="false" />
         <activity
@@ -66,7 +69,7 @@
             android:name=".CashActivity"
             android:exported="false" />
         <activity
-            android:name=".ReportsActivity"
+            android:name=".UI.Reports.ReportsActivity"
             android:exported="false" />
         <activity
             android:name=".UI.Suppliers.SuppliersActivity"
@@ -81,7 +84,7 @@
             android:name=".UI.Dashboard.Dashboard"
             android:exported="true" />
         <activity
-            android:name=".MainActivity"
+            android:name=".UI.Purchase.currentPurchase.PurchaseActivity"
             android:exported="true" />
     </application>
 

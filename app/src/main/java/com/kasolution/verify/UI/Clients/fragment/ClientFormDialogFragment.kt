@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
+import com.kasolution.verify.R
 import com.kasolution.verify.UI.Clientes.viewModel.ClientesViewModel
 import com.kasolution.verify.domain.clients.model.Client
 import com.kasolution.verify.core.utils.ToastHelper
@@ -79,6 +80,7 @@ class ClientFormDialogFragment : DialogFragment() {
 
     }
     private fun validar(n: String, d: String, t: String, e: String, di: String): Boolean {
+        var isValid = true
         binding.run{
             tilFullName.error = null
             tilDniRuc.error = null
@@ -86,28 +88,13 @@ class ClientFormDialogFragment : DialogFragment() {
             tilEmail.error=null
             tilDireccion.error=null
         }
-        if(n.isBlank()){
-            binding.tilFullName.error = "El nombre es obligatorio"
-            return false
-        }
-        if(d.isBlank()){
-            binding.tilDniRuc.error = "El DNI/RUC es obligatorio"
-            return false
-        }
-        if(t.isBlank()){
-            binding.tilTelefono.error = "El telefono es obligatorio"
-            return false
-        }
-        if(e.isBlank()){
-            binding.tilEmail.error = "El email es obligatorio"
-            return false
-        }
-        if(di.isBlank()){
-            binding.tilDireccion.error = "La direccion es obligatoria"
-            return false
-        }
+        if(n.isBlank()){ binding.tilFullName.error = "El nombre es obligatorio";isValid=false }
+        if(d.isBlank()){ binding.tilDniRuc.error = "El DNI/RUC es obligatorio";isValid=false }
+        if(t.isBlank()){ binding.tilTelefono.error = "El telefono es obligatorio";isValid=false }
+        if(e.isBlank()){ binding.tilEmail.error = "El email es obligatorio";isValid=false }
+        if(di.isBlank()){ binding.tilDireccion.error = "La direccion es obligatoria";isValid=false }
 
-        return true
+        return isValid
     }
 
     override fun onDestroyView() {
@@ -125,6 +112,7 @@ class ClientFormDialogFragment : DialogFragment() {
             )
             // Opcional: Quitar el fondo por defecto de Android para que se vea tu fondo redondeado
             setBackgroundDrawableResource(android.R.color.transparent)
+            setWindowAnimations(R.style.AnimationiOSDialog)
         }
     }
 

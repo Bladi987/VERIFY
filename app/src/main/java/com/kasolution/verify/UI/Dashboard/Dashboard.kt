@@ -14,12 +14,15 @@ import com.kasolution.verify.UI.Dashboard.View.model.itemGridMenu
 import com.kasolution.verify.UI.Dashboard.viewModel.DashboardViewModel
 import com.kasolution.verify.UI.Employees.EmployeesActivity
 import com.kasolution.verify.UI.Inventory.InventoryActivity
+import com.kasolution.verify.UI.Purchase.currentPurchase.PurchaseActivity
+import com.kasolution.verify.UI.Purchase.history.PurchaseHistoryActivity
 import com.kasolution.verify.UI.Sales.CurrentSale.SalesActivity
 import com.kasolution.verify.UI.Sales.History.HistoryActivity
 import com.kasolution.verify.UI.Settings.SettingsActivity
 import com.kasolution.verify.UI.Suppliers.SuppliersActivity
 import com.kasolution.verify.core.AppProvider
 import com.kasolution.verify.databinding.ActivityDashboardBinding
+import kotlin.jvm.java
 
 class Dashboard : AppCompatActivity() {
     private lateinit var glmanager: GridLayoutManager
@@ -61,10 +64,12 @@ class Dashboard : AppCompatActivity() {
         val arrayList: ArrayList<itemGridMenu> = ArrayList()
         arrayList.clear()
         arrayList.add(itemGridMenu(R.drawable.ic_module_ventas, "Ventas"))
+        arrayList.add(itemGridMenu(R.drawable.ic_module_compras, "Compras"))
         arrayList.add(itemGridMenu(R.drawable.ic_module_inventario, "Inventario"))
         arrayList.add(itemGridMenu(R.drawable.ic_module_clientes, "Clientes"))
         arrayList.add(itemGridMenu(R.drawable.ic_module_proveedores, "Proveedores"))
         arrayList.add(itemGridMenu(R.drawable.ic_module_history_sales, "Historial de Ventas"))
+        arrayList.add(itemGridMenu(R.drawable.ic_module_history_sales, "Historial de Compras"))
         arrayList.add(itemGridMenu(R.drawable.ic_module_reportes, "Reportes"))
         arrayList.add(itemGridMenu(R.drawable.ic_module_caja, "Caja"))
         arrayList.add(itemGridMenu(R.drawable.ic_module_usuarios, "Usuarios"))
@@ -94,6 +99,10 @@ class Dashboard : AppCompatActivity() {
                 val intent = Intent(this, SalesActivity::class.java)
                 startActivity(intent)
             }
+            "Compras" -> {
+                val intent = Intent(this, PurchaseActivity::class.java)
+                startActivity(intent)
+            }
 
             "Inventario" -> {
                 // Lógica para la opción de Inventario
@@ -115,6 +124,11 @@ class Dashboard : AppCompatActivity() {
             "Historial de Ventas" -> {
                 // Lógica para la opción de Historial de Ventas
                 val intent = Intent(this, HistoryActivity::class.java)
+                startActivity(intent)
+            }
+            "Historial de Compras" -> {
+                // Lógica para la opción de Historial de Ventas
+                val intent = Intent(this, PurchaseHistoryActivity::class.java)
                 startActivity(intent)
             }
 

@@ -9,7 +9,8 @@ import com.google.gson.reflect.TypeToken
 import com.kasolution.verify.data.network.SocketManager
 import com.kasolution.verify.domain.Inventory.model.Product
 import com.kasolution.verify.domain.clients.model.Client
-import com.kasolution.verify.domain.sales.model.CartItem
+import com.kasolution.verify.UI.Sales.model.CartItem
+import com.kasolution.verify.data.local.SessionManager
 import com.kasolution.verify.domain.usecases.Clients.GetClientsUseCase
 import com.kasolution.verify.domain.usecases.Inventory.GetProductsUseCase
 import com.kasolution.verify.domain.usecases.Sales.DeleteSaleUseCase
@@ -19,6 +20,7 @@ import com.kasolution.verify.domain.usecases.Sales.GetSaleDetailUseCase
 import java.util.UUID
 
 class SalesViewModel(
+    private val sesionManager: SessionManager,
     private val saveSaleUseCase: SaveSaleUseCase,
     private val getSalesHistoryUseCase: GetSalesHistoryUseCase,
     private val deleteSaleUseCase: DeleteSaleUseCase,
@@ -30,6 +32,9 @@ class SalesViewModel(
 
     private val TAG = "SalesViewModel"
     private var currentRequestId: String? = null
+    val userId: Int = sesionManager.getUserId()
+    val userName: String = sesionManager.getUserName()
+    val userRole: String = sesionManager.getUserRole()
     private val gson = Gson()
 
     // --- LIVE DATA DEL CARRITO ---
@@ -108,7 +113,7 @@ class SalesViewModel(
         }
 
         // Escuchar Productos
-        productRepo.onInventoryListReceived = { lista ->
+        productRepo.onProductsListReceived = { lista ->
             _productsList.postValue(lista)
             _isLoading.postValue(false)
         }
@@ -120,23 +125,24 @@ class SalesViewModel(
         }
 
         // Manejador de resultados general
-        val resultHandler: (String, Boolean, String?) -> Unit = { accion, exito, requestIdRecibido ->
-            if (requestIdRecibido == currentRequestId || requestIdRecibido == null) {
-                _isLoading.postValue(false)
-                if (exito) {
-                    if (accion == "SALE_SAVE") {
-                        clearCart()
+        val resultHandler: (String, Boolean, String?) -> Unit =
+            { accion, exito, requestIdRecibido ->
+                if (requestIdRecibido == currentRequestId || requestIdRecibido == null) {
+                    _isLoading.postValue(false)
+                    if (exito) {
+                        if (accion == "SALE_SAVE") {
+                            clearCart()
+                        }
+                        _operationSuccess.postValue(accion)
+                        currentRequestId = null
+                        // Recargamos historial para que la nueva venta aparezca en la lista de atrás
+                        loadSalesHistory()
+                    } else {
+                        exception.postValue("Error en operación: $accion")
+                        currentRequestId = null
                     }
-                    _operationSuccess.postValue(accion)
-                    currentRequestId = null
-                    // Recargamos historial para que la nueva venta aparezca en la lista de atrás
-                    loadSalesHistory()
-                } else {
-                    exception.postValue("Error en operación: $accion")
-                    currentRequestId = null
                 }
             }
-        }
         salesRepo.onOperationResult = resultHandler
     }
 
@@ -218,6 +224,17 @@ class SalesViewModel(
                 _cartList.value = currentList
                 calculateTotals()
             }
+        }
+    }
+
+    fun updatePrice(idProducto: Int, nuevoPrecio: Double) {
+        val currentList = _cartList.value?.toMutableList() ?: return
+        val index = currentList.indexOfFirst { it.producto.id == idProducto }
+        if (index != -1 && nuevoPrecio >= 0) {
+            currentList[index] =
+                currentList[index].copy(producto = currentList[index].producto.copy(precioVenta = nuevoPrecio))
+            _cartList.value = currentList
+            calculateTotals()
         }
     }
 

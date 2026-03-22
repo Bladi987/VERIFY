@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
+import com.kasolution.verify.R
 import com.kasolution.verify.domain.Inventory.model.Category
 import com.kasolution.verify.UI.Category.viewModel.CategoriesViewModel
 import com.kasolution.verify.core.utils.ToastHelper
@@ -78,14 +79,10 @@ class CategoryFormDialogFragment : DialogFragment() {
 
     }
     private fun validar(nombre: String): Boolean {
-        binding.run{
-            tilNombreCat.error = null
-        }
-        if(nombre.isBlank()){
-            binding.tilNombreCat.error = "El nombre es obligatorio"
-            return false
-        }
-        return true
+        var isValid = true
+        binding.run{ tilNombreCat.error = null }
+        if(nombre.isBlank()){ binding.tilNombreCat.error = "El nombre es obligatorio";isValid=false }
+        return isValid
     }
     override fun onDestroyView() {
         super.onDestroyView()
@@ -101,6 +98,7 @@ class CategoryFormDialogFragment : DialogFragment() {
             )
             // Opcional: Quitar el fondo por defecto de Android para que se vea tu fondo redondeado
             setBackgroundDrawableResource(android.R.color.transparent)
+            setWindowAnimations(R.style.AnimationiOSDialog)
         }
     }
 

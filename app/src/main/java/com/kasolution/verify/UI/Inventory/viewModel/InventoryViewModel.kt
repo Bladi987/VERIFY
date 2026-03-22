@@ -4,10 +4,10 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.kasolution.verify.domain.Inventory.model.Category
-import com.kasolution.verify.domain.Inventory.model.Product
 import com.kasolution.verify.domain.supplier.model.Supplier
 import com.kasolution.verify.data.network.SocketManager
+import com.kasolution.verify.domain.Inventory.model.Category
+import com.kasolution.verify.domain.Inventory.model.Product
 import com.kasolution.verify.domain.usecases.Categories.GetCategoriesUseCase
 import com.kasolution.verify.domain.usecases.Categories.SaveCategoryUseCase
 import com.kasolution.verify.domain.usecases.Inventory.DeleteProductUseCase
@@ -49,7 +49,7 @@ class InventoryViewModel(
     val operationSuccess: LiveData<String> get() = _operationSuccess
 
     init {
-        // 1. REACTIVACIÓN DE TODOS LOS REPOSITORIOS INVOLUCRADOS
+        // Registro de observadores (Idéntico a Clientes)
         getProductsUseCase.repository.registerObserver()
         getSuppliersUseCase.repository.registerObserver()
         getCategoriesUseCase.repository.registerObserver()
@@ -57,123 +57,94 @@ class InventoryViewModel(
         setupRepositoryObservers()
 
         socketManager.onConnected = {
-            Log.d(TAG, "Socket conectado (Inventory) -> Recargando todo")
-            loadProducts()
-            loadCategories()
-            loadSuppliers()
+            Log.d(TAG, "Socket reconectado -> Sincronizando inventario")
+            loadInitialData()
         }
 
         if (socketManager.isConnected) {
-            loadProducts()
-            loadCategories()
-            loadSuppliers() // Añadido para consistencia inicial
+            loadInitialData()
         }
     }
 
     private fun setupRepositoryObservers() {
-        val repo = getProductsUseCase.repository
-        val supplierRepo = getSuppliersUseCase.repository
-        val categoriesRepo = getCategoriesUseCase.repository
+        val prodRepo = getProductsUseCase.repository
+        val suppRepo = getSuppliersUseCase.repository
+        val catRepo = getCategoriesUseCase.repository
 
-        repo.onInventoryListReceived = { lista ->
-            Log.d(TAG, "Cantidad de Productos recibidos: ${lista.size}")
+        // Callbacks de Listas - NOTA: Nombres alineados con el Repository
+        prodRepo.onProductsListReceived = { lista ->
             _productsList.postValue(lista)
-            _isLoading.postValue(false)
+            _isLoading.postValue(false) // Solo el flujo de productos apaga el loading principal
         }
 
-        supplierRepo.onSuppliersListReceived = { lista ->
-            Log.d(TAG, "Cantidad de Proveedores recibidos: ${lista.size}")
+        suppRepo.onSuppliersListReceived = { lista ->
             _suppliersList.postValue(lista)
-            _isLoading.postValue(false)
         }
 
-        categoriesRepo.onCategoriesListReceived = { lista ->
-            Log.d(TAG, "Cantidad de categorias recibidos: ${lista.size}")
+        catRepo.onCategoriesListReceived = { lista ->
             _categoriesList.postValue(lista)
-            _isLoading.postValue(false)
         }
 
-        val resultHandler: (String, Boolean, String?) -> Unit =
-            { accion, exito, requestIdRecibido ->
-                _isLoading.postValue(false)
+        // Handler de Resultados (Refactorizado para ser 100% como Clientes)
+        val resultHandler: (String, Boolean, String?) -> Unit = { accion, exito, requestIdRecibido ->
+            // Regla de oro: Cualquier respuesta de servidor detiene el progreso
+            _isLoading.postValue(false)
 
-                if (exito) {
-                    if (requestIdRecibido == currentRequestId) {
-                        _operationSuccess.postValue(accion)
-                        currentRequestId = null
-                    }
-                    // Dependiendo de qué se guardó, refrescamos la lista correspondiente
-                    when(accion) {
-                        "PRODUCT_SAVE", "PRODUCT_UPDATE", "PRODUCT_DELETE" -> loadProducts()
-                        "CATEGORY_SAVE" -> loadCategories()
-                    }
-                } else {
-                    if (requestIdRecibido == currentRequestId) {
-                        exception.postValue("Error en operación Inventory: $accion")
-                        currentRequestId = null
-                    }
+            if (exito) {
+                if (requestIdRecibido == currentRequestId) {
+                    _operationSuccess.postValue(accion)
+                    currentRequestId = null
+                }
+
+                // Refresco inteligente según la acción
+                when(accion) {
+                    "PRODUCT_SAVE", "PRODUCT_UPDATE", "PRODUCT_DELETE" -> loadProducts()
+                    "CATEGORY_SAVE" -> loadCategories()
+                }
+            } else {
+                if (requestIdRecibido == currentRequestId) {
+                    exception.postValue("Error en servidor: $accion")
+                    currentRequestId = null
                 }
             }
+        }
 
-        // Suscribimos el handler a todos los repositorios para capturar éxitos/errores
-        repo.onOperationResult = resultHandler
-        supplierRepo.onOperationResult = resultHandler
-        categoriesRepo.onOperationResult = resultHandler
-        saveCategoryUseCase.repository.onOperationResult = resultHandler
-        saveProductUseCase.repository.onOperationResult = resultHandler
-        updateProductUseCase.repository.onOperationResult = resultHandler
-        deleteProductUseCase.repository.onOperationResult = resultHandler
+        // Asignación de handler único a todos los repositorios involucrados
+        prodRepo.onOperationResult = resultHandler
+        suppRepo.onOperationResult = resultHandler
+        catRepo.onOperationResult = resultHandler
     }
 
     /* --- MÉTODOS DE CARGA --- */
 
+    fun loadInitialData() {
+        // Cargamos auxiliares primero y productos al final para que el loading sea coherente
+        loadCategories()
+        loadSuppliers()
+        loadProducts()
+    }
+
     fun loadProducts() {
-        if (socketManager.isConnected) {
-            _isLoading.postValue(true)
-            getProductsUseCase()
-        } else {
-            exception.postValue("Servidor desconectado")
-        }
+        if (_isLoading.value == true) return
+        _isLoading.postValue(true)
+        if (socketManager.isConnected) getProductsUseCase()
+        else exception.postValue("Servidor desconectado")
     }
 
-    fun loadSuppliers(){
-        if (socketManager.isConnected) {
-            _isLoading.postValue(true)
-            getSuppliersUseCase()
-        }
-    }
-
-    fun loadCategories(){
-        if (socketManager.isConnected) {
-            _isLoading.postValue(true)
-            getCategoriesUseCase()
-        }
-    }
+    fun loadSuppliers() = getSuppliersUseCase()
+    fun loadCategories() = getCategoriesUseCase()
 
     /* --- OPERACIONES --- */
 
-    fun saveCategory(nombre: String, descripcion: String){
+    fun saveProduct(product: Product) {
         _isLoading.postValue(true)
         currentRequestId = UUID.randomUUID().toString()
-        val category = Category(id = 0, nombre = nombre, descripcion = descripcion, estado = true)
-        saveCategoryUseCase(category, currentRequestId!!)
-    }
-
-    fun saveProduct(codigo: String, nombre: String, idCategoria: Int, idProveedor: Int,
-                    precioCompra: Double, precioVenta: Double, stock: Int, unidadMedida: String, estado: Boolean) {
-        _isLoading.postValue(true)
-        currentRequestId = UUID.randomUUID().toString()
-        val product = Product(0, codigo, nombre, idCategoria, null, idProveedor, null,
-            precioCompra, precioVenta, stock, unidadMedida, estado)
         saveProductUseCase(product, currentRequestId!!)
     }
 
-    fun updateProduct(id: Int, codigo: String, nombre: String, idCategoria: Int, idProveedor: Int,
-                      precioCompra: Double, precioVenta: Double, stock: Int, unidadMedida: String, estado: Boolean) {
+    fun updateProduct(product: Product) {
         _isLoading.postValue(true)
         currentRequestId = UUID.randomUUID().toString()
-        val product = Product(id, codigo, nombre, idCategoria, null, idProveedor, null,
-            precioCompra, precioVenta, stock, unidadMedida, estado)
         updateProductUseCase(product, currentRequestId!!)
     }
 
@@ -183,6 +154,13 @@ class InventoryViewModel(
         deleteProductUseCase(id, currentRequestId!!)
     }
 
+    fun saveCategory(nombre: String, descripcion: String) {
+        _isLoading.postValue(true)
+        currentRequestId = UUID.randomUUID().toString()
+        val category = Category(0, nombre, descripcion, true)
+        saveCategoryUseCase(category, currentRequestId!!)
+    }
+
     fun resetOperationStatus() {
         _operationSuccess.value = ""
         _isLoading.value = false
@@ -190,8 +168,6 @@ class InventoryViewModel(
 
     override fun onCleared() {
         super.onCleared()
-        Log.d(TAG, "InventoryViewModel destruido - Limpiando 3 repositorios")
-        // 2. LIMPIEZA ABSOLUTA DE LOS 3 OBSERVADORES
         getProductsUseCase.repository.clear()
         getSuppliersUseCase.repository.clear()
         getCategoriesUseCase.repository.clear()

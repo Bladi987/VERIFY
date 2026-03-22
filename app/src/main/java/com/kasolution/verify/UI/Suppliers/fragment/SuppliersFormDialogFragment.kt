@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
+import com.kasolution.verify.R
 import com.kasolution.verify.domain.supplier.model.Supplier
 import com.kasolution.verify.UI.Suppliers.viewModel.SuppliersViewModel
 import com.kasolution.verify.core.utils.ToastHelper
@@ -73,30 +74,19 @@ class SuppliersFormDialogFragment : DialogFragment() {
         }
     }
     private fun validar(n: String, t: String, e: String, di: String): Boolean {
+        var isValid = true
         binding.run{
             tilNombreProv.error = null
             tilTelefonoProv.error = null
             tilEmailProv.error=null
             tilDireccionProv.error=null
         }
-        if(n.isBlank()){
-            binding.tilNombreProv.error = "El nombre es obligatorio"
-            return false
-        }
-        if(t.isBlank()){
-            binding.tilTelefonoProv.error = "El telefono es obligatorio"
-            return false
-        }
-        if(e.isBlank()){
-            binding.tilEmailProv.error = "El email es obligatorio"
-            return false
-        }
-        if(di.isBlank()){
-            binding.tilDireccionProv.error = "La direccion es obligatoria"
-            return false
-        }
+        if(n.isBlank()){ binding.tilNombreProv.error = "El nombre es obligatorio";isValid=false }
+        if(t.isBlank()){ binding.tilTelefonoProv.error = "El telefono es obligatorio";isValid=false }
+        if(e.isBlank()){ binding.tilEmailProv.error = "El email es obligatorio";isValid=false }
+        if(di.isBlank()){ binding.tilDireccionProv.error = "La direccion es obligatoria";isValid=false }
 
-        return true
+        return isValid
     }
 
     override fun onDestroyView() {
@@ -113,6 +103,7 @@ class SuppliersFormDialogFragment : DialogFragment() {
             )
             // Opcional: Quitar el fondo por defecto de Android para que se vea tu fondo redondeado
             setBackgroundDrawableResource(android.R.color.transparent)
+            setWindowAnimations(R.style.AnimationiOSDialog)
         }
     }
     companion object {

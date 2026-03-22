@@ -18,6 +18,10 @@
     <color name="booton_line_edittext">#68B0F2</color>
     <color name="grey_image_backgroud">#D7D7D7</color>
     <color name="blue_accent">#1E25E5</color>
+    <color name="blue_light">#E3F2FD</color>
+    <color name="emerald_green_light">#E8F5E9</color>
+    <color name="emerald_green">#2E7D32</color>
+
 
 
     <color name="background_card_success">#E8F5E9</color>

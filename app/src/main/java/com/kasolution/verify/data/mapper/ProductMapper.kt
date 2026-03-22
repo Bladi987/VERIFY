@@ -3,37 +3,33 @@ import com.kasolution.verify.data.remote.dto.ProductDto
 import com.kasolution.verify.domain.Inventory.model.Product
 
 fun ProductDto.toDomain() = Product(
-    id = this.id,
+    id = this.id ?: 0,
     codigo = this.codigo ?: "S/C",
     nombre = this.nombre ?: "Sin Nombre",
-    idCategoria = this.idCategoria?.toIntOrNull() ?: 0,
-    nombreCategoria = this.nombreCategoria,
-    idProveedor = this.idProveedor?.toIntOrNull() ?: 0,
-    nombreProveedor = this.nombreProveedor,
-    precioCompra = this.precioCompra?.toDoubleOrNull() ?: 0.0,
-    precioVenta = this.precioVenta?.toDoubleOrNull() ?: 0.0,
-    stock = this.stock?.toIntOrNull() ?: 0,
+    // Ya no necesitamos toString() ni toIntOrNull() porque el DTO ya es Int?
+    idCategoria = this.idCategoria ?: 0,
+    nombreCategoria = this.nombreCategoria ?: "General",
+    idProveedor = this.idProveedor ?: 0,
+    nombreProveedor = this.nombreProveedor ?: "S/P",
+    precioCompra = this.precioCompra ?: 0.0,
+    precioVenta = this.precioVenta ?: 0.0,
+    stock = this.stock ?: 0,
     unidadMedida = this.unidadMedida ?: "unidad",
-    estado = when(this.estado) {
-        is Boolean -> this.estado
-        is Number -> this.estado.toInt() == 1
-        is String -> this.estado == "1" || this.estado.lowercase() == "true"
-        else -> false
-    }
+    // Simplificamos la lógica del estado ya que el DTO captura el Int de la DB
+    estado = this.estado ?: true
 )
 
 fun Product.toDto() = ProductDto(
     id = this.id,
     codigo = this.codigo,
     nombre = this.nombre,
-    // Convertimos los números a String porque el DTO ahora los espera así
-    idCategoria = this.idCategoria.toString(),
+    idCategoria = this.idCategoria,
     nombreCategoria = this.nombreCategoria,
-    idProveedor = this.idProveedor.toString(),
+    idProveedor = this.idProveedor,
     nombreProveedor = this.nombreProveedor,
-    precioCompra = this.precioCompra.toString(),
-    precioVenta = this.precioVenta.toString(),
-    stock = this.stock.toString(),
+    precioCompra = this.precioCompra,
+    precioVenta = this.precioVenta,
+    stock = this.stock,
     unidadMedida = this.unidadMedida,
-    estado = this.estado // El DTO acepta Any?, así que el Boolean pasará bien
+    estado = this.estado ?: true
 )

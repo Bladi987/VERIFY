@@ -11,13 +11,13 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.kasolution.verify.R
 import com.kasolution.verify.UI.Clientes.viewModel.ClientesViewModel
 import com.kasolution.verify.UI.Clients.adapter.ClientesAdapter
 import com.kasolution.verify.UI.Clients.fragment.ClientFormDialogFragment
 import com.kasolution.verify.domain.clients.model.Client
 import com.kasolution.verify.core.AppProvider
+import com.kasolution.verify.core.utils.BottomSheetHelper
 import com.kasolution.verify.core.utils.DialogHelper
 import com.kasolution.verify.core.utils.ProgressHelper
 import com.kasolution.verify.core.utils.ToastHelper
@@ -30,7 +30,6 @@ class ClientsActivity : AppCompatActivity() {
     private lateinit var adapter: ClientesAdapter
     private lateinit var lista: ArrayList<Client>
     private var selectedClient: Client? = null
-    private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
     private val viewModel: ClientesViewModel by viewModels {
         AppProvider.provideClientsViewModelFactory()
     }
@@ -39,13 +38,6 @@ class ClientsActivity : AppCompatActivity() {
         binding = ActivityClientsBinding.inflate(layoutInflater)
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
-
-        bottomSheetBehavior = BottomSheetBehavior.from(binding.layoutOptions)
-        bottomSheetBehavior.apply {
-            isHideable = true
-            skipCollapsed = true
-            state = BottomSheetBehavior.STATE_HIDDEN // Inicia oculto
-        }
         setSupportActionBar(binding.actionBar)
         supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
@@ -53,7 +45,6 @@ class ClientsActivity : AppCompatActivity() {
         }
         lista = ArrayList()
         initRecycler()
-        initBottonSheet()
         setupObservers()
 
         binding.etSearch.addTextChangedListener(object : TextWatcher {
@@ -73,27 +64,6 @@ class ClientsActivity : AppCompatActivity() {
             dialogFragment.show(supportFragmentManager, "ClientTag")
         }
 
-        binding.btnEditOption.setOnClickListener {
-            selectedClient?.let { emp ->
-                // Abrimos el diálogo enviando el objeto cliente
-                val dialog = ClientFormDialogFragment.newInstance(emp)
-                dialog.show(supportFragmentManager, "EditClient")
-                hideOptions()
-            }
-        }
-
-        binding.btnDeleteOption.setOnClickListener {
-            selectedClient?.let { cli ->
-                DialogHelper.showConfirmation(
-                    this,
-                    "Eliminar Cuenta",
-                    "¿Estás seguro de que deseas eliminar a ${cli.nombre}?",
-                    onConfirm = {
-                        viewModel.deleteCliente(cli.id)
-                        hideOptions()
-                    })
-            }
-        }
         binding.btnRetry.setOnClickListener {
             viewModel.loadClientes()
         }
@@ -116,53 +86,39 @@ class ClientsActivity : AppCompatActivity() {
 
         adapter.onDataChanged(lista.isEmpty())
     }
-    private fun initBottonSheet() {
-        bottomSheetBehavior.addBottomSheetCallback(object :
-            BottomSheetBehavior.BottomSheetCallback() {
-            override fun onStateChanged(bottomSheet: View, newState: Int) {
-                if (newState == BottomSheetBehavior.STATE_HIDDEN) {
-                    // Aquí puedes realizar acciones cuando el usuario termine de deslizarlo hacia abajo
-                    adapter.clearSelection()
-                }
-            }
-
-            override fun onSlide(bottomSheet: View, slideOffset: Float) {
-                // Opcional: puedes cambiar la opacidad de un fondo oscuro aquí
-            }
-        })
-    }
     private fun onItemClicListener(cliente: Client) {
         //Toast.makeText(this, "${cliente.nombre} - ${cliente.usuario}", Toast.LENGTH_SHORT).show()
-        hideOptions()
     }
 
     private fun showOptionsFor(cliente: Client, position: Int) {
         binding.etSearch.clearFocus()
         selectedClient = cliente
-        binding.tvSelectedName.text = cliente.nombre
         adapter.setSelectedItem(position)
+        BottomSheetHelper.showInventoryOptions(
+            activity = this,
+            cabeceraName = "Cliente",
+            name = cliente.nombre,
+            onEdit = {
+                val dialog = ClientFormDialogFragment.newInstance(cliente)
+                dialog.show(supportFragmentManager, "EditClient")
+            },
+            onDelete = {
+                DialogHelper.showConfirmation(
+                    this,
+                    "Eliminar Cuenta",
+                    "¿Estás seguro de que deseas eliminar a ${cliente.nombre}?",
+                    onConfirm = {
+                        viewModel.deleteCliente(cliente.id)
+                    })
+            },
+            onDismiss = {
+                // Limpieza visual cuando el menú se va
+                selectedClient = null
+                adapter.clearSelection()
+            }
+        )
 
-        if (binding.layoutOptions.visibility != View.VISIBLE) {
-            binding.layoutOptions.visibility = View.VISIBLE
-        }
-
-        // En lugar de usar .animate(), usamos los estados del Behavior
-        if (bottomSheetBehavior.state != BottomSheetBehavior.STATE_EXPANDED) {
-            bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
-        } else {
-            // Animación sutil de feedback si ya estaba abierto (cambio de empleado)
-            binding.tvSelectedName.animate().scaleX(1.1f).scaleY(1.1f).setDuration(100)
-                .withEndAction {
-                    binding.tvSelectedName.animate().scaleX(1f).scaleY(1f).start()
-                }.start()
-        }
     }
-
-    private fun hideOptions() {
-        adapter.clearSelection()
-        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
-    }
-
     private fun setupObservers() {
         viewModel.clientesList.observe(this) { lista ->
             val emptyList = lista.isNullOrEmpty()
@@ -181,7 +137,7 @@ class ClientsActivity : AppCompatActivity() {
                 "CLIENTE_DELETE" -> "Cliente eliminado"
                 else -> ""
             }
-            ToastHelper.showCustomToast(binding.root, mensaje, true)
+            ToastHelper.clasicCustomToast(binding.root, mensaje, true)
             binding.root.postDelayed({
                 viewModel.resetOperationStatus()
             }, 100)
