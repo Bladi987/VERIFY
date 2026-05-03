@@ -2,11 +2,13 @@ package com.kasolution.verify.UI.Dashboard
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import com.kasolution.verify.R
 import com.kasolution.verify.UI.Access.LoginActivity
+import com.kasolution.verify.UI.Cash.CashActivity
 import com.kasolution.verify.UI.Category.CategoriesActivity
 import com.kasolution.verify.UI.Clients.ClientsActivity
 import com.kasolution.verify.UI.Dashboard.View.adapter.gridMenuAdapter
@@ -21,6 +23,7 @@ import com.kasolution.verify.UI.Sales.History.HistoryActivity
 import com.kasolution.verify.UI.Settings.SettingsActivity
 import com.kasolution.verify.UI.Suppliers.SuppliersActivity
 import com.kasolution.verify.core.AppProvider
+import com.kasolution.verify.core.utils.ToastHelper
 import com.kasolution.verify.databinding.ActivityDashboardBinding
 import kotlin.jvm.java
 
@@ -44,7 +47,7 @@ class Dashboard : AppCompatActivity() {
 
         // Ejemplo de logout
         binding.btnLogout.setOnClickListener {
-            viewModel.logout()
+            intentarCerrarSesion()
         }
         viewModel.logoutCompleted.observe(this) { logoutCompleted ->
             if (logoutCompleted) {
@@ -58,6 +61,15 @@ class Dashboard : AppCompatActivity() {
         // Lógica para las Métricas y Alertas (opcional si ya están en XML)
 
 
+    }
+
+    fun intentarCerrarSesion() {
+        if (viewModel.idCaja > 0) {
+            ToastHelper.clasicCustomToast(binding.root, "Debes cerrar la caja antes de salir", false)
+        } else {
+            Log.d("Dashboard", viewModel.idCaja.toString())
+            viewModel.logout()
+        }
     }
 
     private fun llenarDatosMenu(): ArrayList<itemGridMenu> {
@@ -137,7 +149,8 @@ class Dashboard : AppCompatActivity() {
             }
 
             "Caja" -> {
-                // Lógica para la opción de Caja
+                val intent = Intent(this, CashActivity::class.java)
+                startActivity(intent)
             }
 
             "Usuarios" -> {

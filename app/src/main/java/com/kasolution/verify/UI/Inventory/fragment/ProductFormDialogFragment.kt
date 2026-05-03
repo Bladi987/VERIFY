@@ -24,6 +24,7 @@ import com.kasolution.verify.domain.Inventory.model.Product
 import com.kasolution.verify.UI.Inventory.viewModel.InventoryViewModel
 import com.kasolution.verify.domain.supplier.model.Supplier
 import com.kasolution.verify.core.utils.ToastHelper
+import com.kasolution.verify.core.utils.setupCurrencyFormatting
 import com.kasolution.verify.databinding.FragmentProductFormDialogBinding
 
 class ProductFormDialogFragment : DialogFragment() {
@@ -48,8 +49,8 @@ class ProductFormDialogFragment : DialogFragment() {
         super.onViewCreated(view, savedInstanceState)
         view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
         val product = arguments?.getParcelable<Product>(ARG_PRODUCT)
-        setupCurrencyFormatting(binding.etPrecioCompra)
-        setupCurrencyFormatting(binding.etPrecioVenta)
+        binding.etPrecioCompra.setupCurrencyFormatting()
+        binding.etPrecioVenta.setupCurrencyFormatting()
         if (product != null) {
             //MODO EDICION
             binding.tvDialogTitle.text = "Modificar Producto"
@@ -216,33 +217,6 @@ class ProductFormDialogFragment : DialogFragment() {
         }
     }
 
-    private fun setupCurrencyFormatting(editText: TextInputEditText) {
-        val decimalFilter = InputFilter { source, _, _, dest, dstart, dend ->
-            val builder = StringBuilder(dest)
-            builder.replace(dstart, dend, source.toString())
-            // RegEx: Solo números y máximo un punto con dos decimales
-            if (!builder.toString().matches(Regex("^\\d*(\\.\\d{0,2})?$"))) {
-                if (source.isEmpty()) dest.subSequence(dstart, dend) else ""
-            } else null
-        }
-        editText.filters = arrayOf(decimalFilter)
-        editText.setOnFocusChangeListener { _, hasFocus ->
-            if (!hasFocus) {
-                val text = editText.text.toString()
-                if (text.isNotEmpty()) {
-                    // Usamos toDoubleOrNull que es más idiomático en Kotlin
-                    val parsed = text.toDoubleOrNull()
-                    if (parsed != null) {
-                        editText.setText(String.format("%.2f", parsed))
-                    } else {
-                        editText.text = null // Si es inválido (ej. solo un ".") limpiamos
-                    }
-                }
-            } else {
-                editText.selectAll()
-            }
-        }
-    }
     fun View.setKeyboardVisibility(show: Boolean) {
         val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         if (show) {
@@ -270,8 +244,6 @@ class ProductFormDialogFragment : DialogFragment() {
             setWindowAnimations(R.style.AnimationiOSDialog)
         }
     }
-
-
 
     companion object {
         private const val ARG_PRODUCT = "product_data"

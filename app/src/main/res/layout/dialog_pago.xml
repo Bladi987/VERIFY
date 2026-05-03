@@ -4,8 +4,9 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     app:cardBackgroundColor="@color/white_pure"
-    app:cardCornerRadius="24dp"
+    app:cardCornerRadius="28dp"
     app:cardElevation="0dp">
+
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -19,21 +20,21 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="20dp"
                 android:text="Finalizar Venta"
                 android:textAlignment="center"
                 android:textColor="@color/grey_text_dark"
-                android:textSize="20sp"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"
-                app:cardBackgroundColor="#F8F9FA"
+                app:cardBackgroundColor="#F1F5F9"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
-                app:strokeColor="#E9ECEF"
+                app:strokeColor="#E2E8F0"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -47,9 +48,9 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:letterSpacing="0.1"
-                        android:text="TOTAL A PAGAR"
+                        android:text="TOTAL A COBRAR"
                         android:textColor="@color/grey_text_secondary"
-                        android:textSize="12sp"
+                        android:textSize="11sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -57,8 +58,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="S/ 0.00"
-                        android:textColor="@color/design_default_color_primary"
-                        android:textSize="32sp"
+                        android:textColor="@color/blue_corporative_primary"
+                        android:textSize="34sp"
                         android:textStyle="bold" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -81,30 +82,32 @@
                 app:selectionRequired="true"
                 app:singleSelection="true">
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnBoleta"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    style="@style/CustomToggleButtonStyle"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Boleta"
-                    app:cornerRadius="8dp" />
+                    android:textSize="12sp" />
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnFactura"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    style="@style/CustomToggleButtonStyle"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Factura" />
+                    android:text="Factura"
+                    android:textSize="12sp" />
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnTicket"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    style="@style/CustomToggleButtonStyle"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Ticket" />
+                    android:text="Ticket"
+                    android:textSize="12sp" />
             </com.google.android.material.button.MaterialButtonToggleGroup>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -112,21 +115,20 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:boxCornerRadiusBottomEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusTopStart="12dp"
+                android:layout_marginBottom="12dp"
+                app:boxCornerRadiusBottomEnd="14dp"
+                app:boxCornerRadiusBottomStart="14dp"
+                app:boxCornerRadiusTopEnd="14dp"
+                app:boxCornerRadiusTopStart="14dp"
                 app:startIconDrawable="@drawable/ic_person">
 
                 <AutoCompleteTextView
                     android:id="@+id/actvBuscarCliente"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:imeOptions="actionDone"
-                    android:completionThreshold="1"
                     android:hint="Cliente / DNI"
-                    android:inputType="text" />
+                    android:inputType="text"
+                    android:textSize="15sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -134,8 +136,12 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginBottom="20dp"
                 android:visibility="gone"
+                app:boxCornerRadiusBottomEnd="14dp"
+                app:boxCornerRadiusBottomStart="14dp"
+                app:boxCornerRadiusTopEnd="14dp"
+                app:boxCornerRadiusTopStart="14dp"
                 app:startIconDrawable="@drawable/ic_business">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -143,7 +149,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Razón Social (Obligatorio)"
-                    android:inputType="textCapCharacters" />
+                    android:inputType="textCapCharacters"
+                    android:textSize="15sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <TextView
@@ -159,7 +166,7 @@
                 android:id="@+id/toggleMetodoPago"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
+                android:layout_marginBottom="16dp"
                 app:checkedButton="@+id/btnEfectivo"
                 app:selectionRequired="true"
                 app:singleSelection="true">
@@ -170,7 +177,9 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Efectivo" />
+                    android:text="Efectivo"
+                    android:textSize="12sp"
+                    app:icon="@drawable/ic_price_tag"/>
 
                 <Button
                     android:id="@+id/btnTarjeta"
@@ -178,88 +187,20 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Tarjeta" />
-            </com.google.android.material.button.MaterialButtonToggleGroup>
+                    android:text="Tarjeta"
+                    android:textSize="12sp"
+                    app:icon="@drawable/ic_card"/>
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:letterSpacing="0.1"
-                android:text="MONTOS RÁPIDOS"
-                android:textColor="@color/grey_text_secondary"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-
-            <HorizontalScrollView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
-                android:scrollbars="none">
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
+                <Button
+                    android:id="@+id/btnOtros"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:paddingBottom="4dp">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnExacto"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="8dp"
-                        android:text="EXACTO"
-                        android:textAllCaps="false"
-                        android:textSize="13sp"
-                        app:cornerRadius="20dp"
-                        app:strokeColor="#CED4DA"
-                        app:strokeWidth="1dp" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnMonto10"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="8dp"
-                        android:text="S/ 10"
-                        android:textAllCaps="false"
-                        app:cornerRadius="20dp"
-                        app:strokeColor="#CED4DA" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnMonto20"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="8dp"
-                        android:text="S/ 20"
-                        android:textAllCaps="false"
-                        app:cornerRadius="20dp"
-                        app:strokeColor="#CED4DA" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnMonto50"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="8dp"
-                        android:text="S/ 50"
-                        android:textAllCaps="false"
-                        app:cornerRadius="20dp"
-                        app:strokeColor="#CED4DA" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnMonto100"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="S/ 100"
-                        android:textAllCaps="false"
-                        app:cornerRadius="20dp"
-                        app:strokeColor="#CED4DA" />
-                </LinearLayout>
-            </HorizontalScrollView>
+                    android:layout_weight="1"
+                    android:text="Otros"
+                    android:textSize="12sp"
+                    app:icon="@drawable/ic_qr_code"/>
+            </com.google.android.material.button.MaterialButtonToggleGroup>
 
             <LinearLayout
                 android:id="@+id/containerEfectivo"
@@ -267,7 +208,76 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_light_grey_rounded"
                 android:orientation="vertical"
-                android:padding="12dp">
+                android:padding="16dp"
+                android:animateLayoutChanges="true">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:letterSpacing="0.1"
+                    android:text="ACCESOS RÁPIDOS"
+                    android:textColor="@color/grey_text_secondary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnExacto"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="8dp"
+                            android:text="EXACTO"
+                            android:textSize="12sp"
+                            app:cornerRadius="20dp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnMonto10"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="8dp"
+                            android:text="S/ 10"
+                            app:cornerRadius="20dp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnMonto20"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="8dp"
+                            android:text="S/ 20"
+                            app:cornerRadius="20dp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnMonto50"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="8dp"
+                            android:text="S/ 50"
+                            app:cornerRadius="20dp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnMonto100"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="S/ 100"
+                            app:cornerRadius="20dp" />
+                    </LinearLayout>
+                </HorizontalScrollView>
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/tilMontoRecibido"
@@ -275,10 +285,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Monto Recibido"
-                    app:boxCornerRadiusBottomEnd="12dp"
-                    app:boxCornerRadiusBottomStart="12dp"
-                    app:boxCornerRadiusTopEnd="12dp"
-                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusBottomEnd="16dp"
+                    app:boxCornerRadiusBottomStart="16dp"
+                    app:boxCornerRadiusTopEnd="16dp"
+                    app:boxCornerRadiusTopStart="16dp"
                     app:prefixText="S/ ">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -287,7 +297,7 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:inputType="numberDecimal"
-                        android:textSize="20sp"
+                        android:textSize="22sp"
                         android:textStyle="bold" />
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -295,7 +305,7 @@
                     android:id="@+id/tvVuelto"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="12dp"
                     android:gravity="center"
                     android:text="Vuelto: S/ 0.00"
                     android:textColor="#2E7D32"
@@ -306,23 +316,18 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:baselineAligned="false"
-                android:gravity="fill"
+                android:layout_marginTop="32dp"
                 android:orientation="horizontal">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnCancelarPago"
                     style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
                     android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginStart="6dp"
+                    android:layout_height="54dp"
                     android:layout_weight="1"
                     android:backgroundTint="#F2F2F7"
                     android:text="CANCELAR"
-                    android:textAllCaps="false"
                     android:textColor="#FF3B30"
-                    android:textSize="14sp"
                     android:textStyle="bold"
                     app:cornerRadius="16dp" />
 
@@ -330,17 +335,14 @@
                     android:id="@+id/btnConfirmarPago"
                     style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
                     android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginEnd="6dp"
-                    android:layout_weight="1"
+                    android:layout_height="54dp"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1.2"
                     android:backgroundTint="@color/blue_corporative_primary"
                     android:text="FINALIZAR"
-                    android:textAllCaps="false"
-                    android:textColor="@color/white_pure"
-                    android:textSize="14sp"
                     android:textStyle="bold"
-                    app:cornerRadius="16dp" />
+                    app:cornerRadius="16dp"
+                    app:elevation="2dp" />
             </LinearLayout>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

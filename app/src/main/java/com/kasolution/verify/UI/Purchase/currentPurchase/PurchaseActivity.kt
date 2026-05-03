@@ -72,7 +72,7 @@ class PurchaseActivity : AppCompatActivity() {
                 message = "¿Confirmas el ingreso de mercadería por S/ ${String.format("%.2f", total)}?",
                 onConfirm = {
                     val idEmpleado = viewModel.userId
-                    viewModel.savePurchase(supplierSeleccionado!!.id, idEmpleado)
+                    viewModel.savePurchase(supplierSeleccionado!!.id, idEmpleado,"EFECTIVO")
                 }
             )
         }

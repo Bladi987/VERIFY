@@ -6,11 +6,13 @@ import androidx.lifecycle.ViewModel
 import com.kasolution.verify.data.local.SessionManager
 import com.kasolution.verify.domain.usecases.Session.LogoutUseCase
 
-class DashboardViewModel(sessionManager: SessionManager, private val logoutUseCase: LogoutUseCase
+class DashboardViewModel(private val sessionManager: SessionManager, private val logoutUseCase: LogoutUseCase
 ) : ViewModel() {
 
     val userName: String = sessionManager.getUserName()
     val userRole: String = sessionManager.getUserRole()
+    val idCaja: Int get() = sessionManager.getActiveCashSessionId()
+
 
     private val _logoutCompleted = MutableLiveData<Boolean>()
     val logoutCompleted: LiveData<Boolean> get() = _logoutCompleted
@@ -19,4 +21,5 @@ class DashboardViewModel(sessionManager: SessionManager, private val logoutUseCa
         logoutUseCase.execute()   // 🔌 cierra socket + limpia repos
         _logoutCompleted.postValue(true)
     }
+
 }

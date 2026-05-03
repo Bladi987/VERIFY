@@ -68,8 +68,7 @@ class SocketManager private constructor() {
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
-                // IMPORTANTE: El parseo de JSON grandes debe ser fuera del hilo principal
-                // pero como tus repositorios usan postValue, esto está bien por ahora.
+                Log.d(TAG, "Mensaje recibido: ${text}")
                 Log.d(TAG, "Mensaje recibido (Longitud: ${text.length})")
 
                 // Si el mensaje es muy largo, Log.d lo corta en la consola,

@@ -2,6 +2,7 @@
 <resources>
     <string-array name="roles_array">
         <item>ADMIN</item>
+        <item>SUPERVISOR</item>
         <item>CAJERO</item>
         <item>ALMACEN</item>
     </string-array>

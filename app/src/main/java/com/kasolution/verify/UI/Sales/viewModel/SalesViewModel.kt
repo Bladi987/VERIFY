@@ -35,6 +35,7 @@ class SalesViewModel(
     val userId: Int = sesionManager.getUserId()
     val userName: String = sesionManager.getUserName()
     val userRole: String = sesionManager.getUserRole()
+    private val activeCashSessionId: Int get() = sesionManager.getActiveCashSessionId()
     private val gson = Gson()
 
     // --- LIVE DATA DEL CARRITO ---
@@ -261,12 +262,17 @@ class SalesViewModel(
 
     // --- PERSISTENCIA ---
 
-    fun saveSale(idCliente: Int?, idEmpleado: Int, metodoPago: String, idTipoComprobante: Int) {
+    fun saveSale(idCliente: Int?, idEmpleado: Int, pagos: List<Map<String, Any>>, idTipoComprobante: Int) {
         if (_isLoading.value == true) return
         if (_cartList.value.isNullOrEmpty()) return
 
+        val tieneEfectivo = pagos.any { it["metodo"] == "EFECTIVO" }
+        if (tieneEfectivo && activeCashSessionId <= 0) {
+            exception.postValue("Error: No hay una sesión de caja abierta para recibir efectivo.")
+            return
+        }
         _isLoading.value = true
-        _invoiceFullData.value = null // Limpiar ticket previo
+        _invoiceFullData.value = null
         currentRequestId = UUID.randomUUID().toString()
 
         val detalles = _cartList.value!!.map { item ->
@@ -279,10 +285,11 @@ class SalesViewModel(
 
         // Pasamos el Int al UseCase (asegúrate de que tu UseCase también acepte Int ahora)
         saveSaleUseCase(
+            activeCashSessionId,
             idCliente,
             idEmpleado,
             _totalVenta.value ?: 0.0,
-            metodoPago,
+            pagos,
             idTipoComprobante, // Enviamos el ID (1, 2 o 3)
             detalles,
             currentRequestId!!

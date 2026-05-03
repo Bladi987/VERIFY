@@ -4,14 +4,15 @@ import com.kasolution.verify.data.repository.SalesRepository
 
 class SaveSaleUseCase(val repository: SalesRepository) {
     operator fun invoke(
+        idSesion: Int,
         idCliente: Int?,
         idEmpleado: Int,
         total: Double,
-        metodoPago: String,
+        pagos: List<Map<String, Any>>,
         idTipoComprobante: Int,
         detalles: List<Map<String, Any>>,
         requestId: String
     ) {
-        repository.saveSale(idCliente, idEmpleado, total, metodoPago, idTipoComprobante, detalles, requestId)
+        repository.saveSale(idSesion,idCliente, idEmpleado, total, pagos, idTipoComprobante, detalles, requestId)
     }
 }

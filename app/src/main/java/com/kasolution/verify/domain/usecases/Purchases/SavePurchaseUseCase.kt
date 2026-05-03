@@ -6,10 +6,12 @@ class SavePurchaseUseCase(val repository: PurchaseRepository) {
     operator fun invoke(
         idProveedor: Int,
         idEmpleado: Int,
+        idSesion: Int?,
+        metodoPago: String,
         total: Double,
         detalles: List<Map<String, Any>>,
         requestId: String
     ) {
-        repository.savePurchase(idProveedor, idEmpleado, total, detalles, requestId)
+        repository.savePurchase(idProveedor, idEmpleado, idSesion,metodoPago,total, detalles, requestId)
     }
 }

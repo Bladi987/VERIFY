@@ -17,7 +17,7 @@ class SalesRepository(private val socketManager: SocketManager) {
     var onOperationResult: ((String, Boolean, String?) -> Unit)? = null
     var onSalesHistoryReceived: ((List<Map<String, Any>>) -> Unit)? = null
     var onSaleDetailReceived: ((List<Map<String, Any>>) -> Unit)? = null
-    var onInvoiceDataReceived: ((String) -> Unit)? = null // Callback para el paquete completo
+    var onInvoiceDataReceived: ((String) -> Unit)? = null
     var lastGeneratedId: Int? = null
 
     init {
@@ -47,25 +47,20 @@ class SalesRepository(private val socketManager: SocketManager) {
                 } else null
 
                 when (action) {
-                    // Implementación unificada para comprobantes dinámicos
                     "SALE_SAVE", "SALE_GET_DETAIL" -> {
                         Log.d(TAG, "Procesando comprobante: $action -> exito: $status")
 
                         if (status && jsonObject.has("data")) {
-                            // Extraemos el objeto "data" (contiene business, header e items)
                             val dataJson = jsonObject.get("data").toString()
 
                             Handler(Looper.getMainLooper()).post {
-                                // 1. Notificamos al ViewModel el objeto completo del comprobante
                                 onInvoiceDataReceived?.invoke(dataJson)
-
-                                // 2. Notificamos el resultado de la operación para lógica de UI (limpiar carrito, etc)
                                 onOperationResult?.invoke(action, status, requestId)
                             }
                         } else {
-                            // Si hay error, notificamos solo el resultado
+                            val msg = if(jsonObject.has("message")) jsonObject.get("message").asString else null
                             Handler(Looper.getMainLooper()).post {
-                                onOperationResult?.invoke(action, status, requestId)
+                                onOperationResult?.invoke(action, status, msg ?: requestId)
                             }
                         }
                     }
@@ -93,23 +88,22 @@ class SalesRepository(private val socketManager: SocketManager) {
         }
     }
 
-    /**
-     * Procesa el registro de una venta completa.
-     */
     fun saveSale(
+        idSesion: Int,          // NUEVO: Obligatorio para afectar caja física
         idCliente: Int?,
         idEmpleado: Int,
         total: Double,
-        metodoPago: String,
-        idTipoComprobante: Int, // CAMBIO: De String a Int para coincidir con la DB
+        pagos: List<Map<String, Any>>,
+        idTipoComprobante: Int,
         detalles: List<Map<String, Any>>,
         requestId: String
     ) {
         val params = mutableMapOf<String, Any>(
+            "id_sesion" to idSesion, // SE AGREGA AL MAPA
             "id_cliente" to (idCliente ?: 0),
             "id_empleado" to idEmpleado,
             "total" to total,
-            "metodo_pago" to metodoPago.uppercase(),
+            "pagos" to pagos,
             "id_tipo_comprobante" to idTipoComprobante,
             "detalles" to detalles
         )
@@ -122,14 +116,13 @@ class SalesRepository(private val socketManager: SocketManager) {
         socketManager.sendAction("SALE_GET_ALL")
     }
 
-    /**
-     * Solicita los datos completos del comprobante (incluye config empresa)
-     */
     fun getSaleDetail(idVenta: Int) {
         socketManager.sendAction("SALE_GET_DETAIL", mapOf("id_venta" to idVenta))
     }
 
     fun deleteSale(idVenta: Int, requestId: String) {
+        // Al anular, el trigger en el Backend ya sabe qué sesión afectar
+        // porque la venta ya tiene el id_sesion grabado.
         socketManager.sendAction(
             "SALE_DELETE",
             mapOf("id_venta" to idVenta),

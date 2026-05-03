@@ -66,7 +66,7 @@
             android:name=".UI.Employees.EmployeesActivity"
             android:exported="false" />
         <activity
-            android:name=".CashActivity"
+            android:name=".UI.Cash.CashActivity"
             android:exported="false" />
         <activity
             android:name=".UI.Reports.ReportsActivity"

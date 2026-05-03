@@ -40,7 +40,6 @@ class PurchaseRepository(private val socketManager: SocketManager) {
                     jsonObject.get("status").asString == "success"
                 } else false
 
-                // Capturamos el mensaje (útil para errores de validación en anulación)
                 val message = if (jsonObject.has("message") && !jsonObject.get("message").isJsonNull) {
                     jsonObject.get("message").asString
                 } else null
@@ -53,7 +52,6 @@ class PurchaseRepository(private val socketManager: SocketManager) {
                     "PURCHASE_SAVE", "PURCHASE_DELETE" -> {
                         Log.d(TAG, "Respuesta de $action: exito=$status")
                         Handler(Looper.getMainLooper()).post {
-                            // Priorizamos el mensaje del servidor para el feedback en UI
                             onOperationResult?.invoke(action, status, message ?: requestId)
                         }
                     }
@@ -66,7 +64,6 @@ class PurchaseRepository(private val socketManager: SocketManager) {
                         Log.d(TAG, "Historial recibido. Items: ${data.size}")
 
                         Handler(Looper.getMainLooper()).post {
-                            // El campo 'estado' ya viene dentro de cada Map en la lista
                             onPurchaseHistoryReceived?.invoke(data)
                         }
                     }
@@ -86,10 +83,11 @@ class PurchaseRepository(private val socketManager: SocketManager) {
             }
         }
     }
-
     fun savePurchase(
         idProveedor: Int,
         idEmpleado: Int,
+        idSesion: Int?,
+        metodoPago: String,
         total: Double,
         detalles: List<Map<String, Any>>,
         requestId: String
@@ -97,9 +95,12 @@ class PurchaseRepository(private val socketManager: SocketManager) {
         val params = mapOf(
             "id_proveedor" to idProveedor,
             "id_empleado" to idEmpleado,
+            "id_sesion" to (idSesion ?: 0),
+            "metodo_pago" to metodoPago.uppercase(),
             "total" to total,
             "detalles" to detalles
         )
+        Log.d(TAG, "Enviando Compra al Socket: $params")
         socketManager.sendAction("PURCHASE_SAVE", params, requestId)
     }
 

@@ -24,6 +24,7 @@ import com.kasolution.verify.R
 import com.kasolution.verify.UI.Sales.History.HistoryActivity
 import com.kasolution.verify.UI.Sales.viewModel.SalesViewModel
 import com.kasolution.verify.core.utils.NumberToLetterConverter
+import com.kasolution.verify.core.utils.TicketManager
 import com.kasolution.verify.databinding.LayoutTicketSheetBinding
 import java.io.File
 import java.io.FileOutputStream
@@ -114,8 +115,9 @@ class SaleDetailSheet : BottomSheetDialogFragment() {
 
             btnImprimirDuplicado.setOnClickListener {
                 val nroComprobante = tvTicketComprobanteNro.text.toString().replace("\n", "_")
-                val pdfFile = generarPdfTicket(scrollTicket, "Ticket_$nroComprobante")
-                pdfFile?.let { compartirArchivo(it) }
+                TicketManager.generateTicketPdf(requireContext(), binding.scrollTicket, nroComprobante)?.let { file ->
+                    TicketManager.shareTicket(requireContext(), file)
+                }
                 dismiss()
             }
 
@@ -303,36 +305,6 @@ class SaleDetailSheet : BottomSheetDialogFragment() {
             bitmap
         } catch (e: Exception) { null }
     }
-
-    private fun generarPdfTicket(scrollView: NestedScrollView, nombreArchivo: String): File? {
-        val childView = scrollView.getChildAt(0)
-        val margin = 30
-        val pdfWidth = childView.width + (margin * 2)
-        val pdfHeight = childView.height + (margin * 2)
-        val document = PdfDocument()
-        val pageInfo = PdfDocument.PageInfo.Builder(pdfWidth, pdfHeight, 1).create()
-        val page = document.startPage(pageInfo)
-        page.canvas.translate(margin.toFloat(), margin.toFloat())
-        childView.draw(page.canvas)
-        document.finishPage(page)
-        return try {
-            val file = File(requireContext().cacheDir, "$nombreArchivo.pdf")
-            document.writeTo(FileOutputStream(file))
-            document.close()
-            file
-        } catch (e: Exception) { e.printStackTrace(); null }
-    }
-
-    private fun compartirArchivo(file: File) {
-        val uri = FileProvider.getUriForFile(requireContext(), "${requireContext().packageName}.fileprovider", file)
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "application/pdf"
-            putExtra(Intent.EXTRA_STREAM, uri)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        startActivity(Intent.createChooser(intent, "Enviar Ticket por:"))
-    }
-
     override fun onDestroyView() { super.onDestroyView(); _binding = null }
 
     companion object {

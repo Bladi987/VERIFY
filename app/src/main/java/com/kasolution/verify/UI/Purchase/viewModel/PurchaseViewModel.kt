@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.google.gson.Gson
 import com.kasolution.verify.data.network.SocketManager
 import com.kasolution.verify.domain.Inventory.model.Product
 import com.kasolution.verify.domain.supplier.model.Supplier
@@ -31,9 +30,13 @@ class PurchaseViewModel(
 
     private val TAG = "PurchaseViewModel"
     private var currentRequestId: String? = null
+
     val userId: Int = sesionManager.getUserId()
     val userName: String = sesionManager.getUserName()
     val userRole: String = sesionManager.getUserRole()
+
+    // NUEVO: Obtener la sesión de caja activa (Para egresos en EFECTIVO)
+    private val activeCashSessionId: Int get() = sesionManager.getActiveCashSessionId()
 
     // --- LIVE DATA DEL CARRITO ---
     private val _cartList = MutableLiveData<MutableList<PurchaseItem>>(mutableListOf())
@@ -49,7 +52,6 @@ class PurchaseViewModel(
     private val _suppliersList = MutableLiveData<List<Supplier>>()
     val suppliersList: LiveData<List<Supplier>> get() = _suppliersList
 
-    // Ahora este Map incluirá automáticamente el campo "estado" devuelto por el PHP
     private val _purchaseHistory = MutableLiveData<List<Map<String, Any>>>()
     val purchaseHistory: LiveData<List<Map<String, Any>>> get() = _purchaseHistory
 
@@ -92,34 +94,27 @@ class PurchaseViewModel(
         val productRepo = getProductsUseCase.repository
         val supplierRepo = getSuppliersUseCase.repository
 
-        // Historial de Compras
         purchaseRepo.onPurchaseHistoryReceived = { lista ->
-            // Invertimos la lista para que las más recientes (ID mayor) salgan arriba
             _purchaseHistory.postValue(lista.reversed())
             _isLoading.postValue(false)
         }
 
-        // Detalle de Compra
         purchaseRepo.onPurchaseDetailReceived = { data ->
             _purchaseDetailData.postValue(data)
             _isLoading.postValue(false)
         }
 
-        // Productos y Proveedores
         productRepo.onProductsListReceived = { _productsList.postValue(it) }
         supplierRepo.onSuppliersListReceived = { _suppliersList.postValue(it) }
 
-        // MANEJADOR DE RESULTADOS ACTUALIZADO
         purchaseRepo.onOperationResult = { accion, exito, resultMessage ->
-            // resultMessage ahora contiene o el requestId o el Mensaje del Servidor (PHP)
             _isLoading.postValue(false)
-
             if (exito) {
                 if (accion == "PURCHASE_SAVE") clearCart()
                 _operationSuccess.postValue(accion)
-                loadPurchaseHistory() // Refrescamos historial para ver cambios (especialmente tras anular)
+                loadPurchaseHistory()
             } else {
-                // Si exito es false, resultMessage trae el error del PHP (ej: "Compra ya anulada")
+                // Mensaje directo desde PHP (ej: "No hay saldo suficiente en caja")
                 exception.postValue(resultMessage ?: "Error en la operación")
             }
             currentRequestId = null
@@ -161,12 +156,11 @@ class PurchaseViewModel(
         }
     }
 
-    // --- GESTIÓN DEL CARRITO ---
-
+    // --- GESTIÓN DEL CARRITO (Add, Update, Remove, Calculate) ---
+    // (Mantenida igual para conservar tu lógica de negocio)
     fun addProductToCart(product: Product) {
         val currentList = _cartList.value?.toMutableList() ?: mutableListOf()
         val index = currentList.indexOfFirst { it.idProducto == product.id }
-
         if (index != -1) {
             val item = currentList[index]
             currentList[index] = item.copy(cantidad = item.cantidad + 1)
@@ -222,11 +216,17 @@ class PurchaseViewModel(
         _totalCompra.value = 0.0
     }
 
-    // --- REGISTRO DE COMPRA ---
+    // --- REGISTRO DE COMPRA (EL GRAN REAJUSTE) ---
 
-    fun savePurchase(idProveedor: Int, idEmpleado: Int) {
+    fun savePurchase(idProveedor: Int, idEmpleado: Int, metodoPago: String) {
         if (_isLoading.value == true) return
         if (_cartList.value.isNullOrEmpty()) return
+
+        // Validación: Si es efectivo, DEBE haber una caja abierta
+        if (metodoPago == "EFECTIVO" && activeCashSessionId <= 0) {
+            exception.postValue("Error: No puedes comprar en efectivo sin una caja abierta.")
+            return
+        }
 
         _isLoading.value = true
         currentRequestId = UUID.randomUUID().toString()
@@ -239,9 +239,12 @@ class PurchaseViewModel(
             )
         }
 
+        // REAJUSTE: Inyectamos idSesion y metodoPago
         savePurchaseUseCase(
             idProveedor,
             idEmpleado,
+            activeCashSessionId, // Nuevo parámetro
+            metodoPago,          // Nuevo parámetro
             _totalCompra.value ?: 0.0,
             detalles,
             currentRequestId!!

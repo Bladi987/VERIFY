@@ -2,6 +2,7 @@ package com.kasolution.verify.core
 
 import android.content.Context
 import com.kasolution.verify.UI.Access.viewModel.LoginViewModelFactory
+import com.kasolution.verify.UI.Cash.viewModel.CashViewModelFactory
 import com.kasolution.verify.UI.Category.viewModel.CategoriesViewModelFactory
 import com.kasolution.verify.UI.Clients.viewModel.ClientesViewModelFactory
 import com.kasolution.verify.UI.Components.Scanner.viewModel.ScannerViewModelFactory
@@ -15,6 +16,7 @@ import com.kasolution.verify.data.local.SessionManager
 import com.kasolution.verify.data.local.SettingsManager
 import com.kasolution.verify.data.network.SocketManager
 import com.kasolution.verify.data.repository.AuthRepository
+import com.kasolution.verify.data.repository.CashRepository
 import com.kasolution.verify.data.repository.CategoriesRepository
 import com.kasolution.verify.data.repository.ClientsRepository
 import com.kasolution.verify.data.repository.EmpleadoRepository
@@ -26,6 +28,11 @@ import com.kasolution.verify.domain.purchase.DeletePurchaseUseCase
 import com.kasolution.verify.domain.purchase.GetPurchaseDetailUseCase
 import com.kasolution.verify.domain.purchase.GetPurchaseHistoryUseCase
 import com.kasolution.verify.domain.purchase.SavePurchaseUseCase
+import com.kasolution.verify.domain.usecases.Cash.AddCashMovementUseCase
+import com.kasolution.verify.domain.usecases.Cash.CloseCashUseCase
+import com.kasolution.verify.domain.usecases.Cash.GetCashHistoryUseCase
+import com.kasolution.verify.domain.usecases.Cash.GetCashStatusUseCase
+import com.kasolution.verify.domain.usecases.Cash.OpenCashUseCase
 import com.kasolution.verify.domain.usecases.Categories.DeleteCategoryUseCase
 import com.kasolution.verify.domain.usecases.Categories.GetCategoriesUseCase
 import com.kasolution.verify.domain.usecases.Categories.SaveCategoryUseCase
@@ -67,7 +74,7 @@ object AppProvider {
     private var categoriesRepositoryInstance: CategoriesRepository? = null
     private var salesRepositoryInstance: SalesRepository? = null
     private var purchaseRepositoryInstance: PurchaseRepository? = null
-
+    private var cashRepositoryInstance: CashRepository? = null
     private var sessionManagerInstance: SessionManager? = null
 
     /**
@@ -242,6 +249,31 @@ object AppProvider {
         }
     }
 
+    // --- GESTIÓN DE CAJA ---
+
+    private fun getCashRepository(): CashRepository {
+        return cashRepositoryInstance ?: synchronized(this) {
+            cashRepositoryInstance ?: CashRepository(socketManager).also {
+                cashRepositoryInstance = it
+            }
+        }
+    }
+
+    fun provideCashViewModelFactory(context: Context): CashViewModelFactory {
+        val repo = getCashRepository()
+        val sessionManager = provideSessionManager(context)
+
+        return CashViewModelFactory(
+            sessionManager = sessionManager,
+            openCashUseCase = OpenCashUseCase(repo),
+            closeCashUseCase = CloseCashUseCase(repo),
+            getCashStatusUseCase = GetCashStatusUseCase(repo),
+            addCashMovementUseCase = AddCashMovementUseCase(repo),
+            getCashHistoryUseCase = GetCashHistoryUseCase(repo),
+            socketManager = socketManager
+        )
+    }
+
     fun provideSalesViewModelFactory(context: Context): SalesViewModelFactory {
         val sessionManager = provideSessionManager(context)
         val repoInventory = getInventoryRepository()
@@ -334,5 +366,7 @@ object AppProvider {
         categoriesRepositoryInstance = null
         salesRepositoryInstance = null
         purchaseRepositoryInstance = null
+        cashRepositoryInstance?.clear()
+        cashRepositoryInstance = null
     }
 }
