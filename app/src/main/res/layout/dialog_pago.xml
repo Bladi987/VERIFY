@@ -341,6 +341,7 @@
                     android:backgroundTint="@color/blue_corporative_primary"
                     android:text="FINALIZAR"
                     android:textStyle="bold"
+                    android:enabled="false"
                     app:cornerRadius="16dp"
                     app:elevation="2dp" />
             </LinearLayout>

@@ -1,7 +1,5 @@
 package com.kasolution.verify.UI.Sales.CurrentSale
 
-import android.R.attr.duration
-import android.app.AlertDialog
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -13,18 +11,14 @@ import android.transition.TransitionManager
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
-import android.widget.CheckBox
-import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.widget.addTextChangedListener
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.kasolution.verify.R
 import com.kasolution.verify.UI.Components.Scanner.ScannerActivity
-import com.kasolution.verify.UI.Purchase.model.PurchaseItem
 import com.kasolution.verify.UI.Sales.adapter.CartAdapter
 import com.kasolution.verify.UI.Sales.adapter.SearchClienteAdapter
 import com.kasolution.verify.UI.Sales.adapter.SearchProductAdapter
@@ -39,6 +33,7 @@ import com.kasolution.verify.databinding.DialogPagoBinding
 import com.kasolution.verify.domain.Inventory.model.Product
 import com.kasolution.verify.domain.clients.model.Client
 import com.kasolution.verify.UI.Sales.model.CartItem
+import com.kasolution.verify.core.utils.setupCurrencyFormatting
 import com.kasolution.verify.databinding.LayoutOtrosPagosBinding
 import java.util.Locale
 
@@ -336,25 +331,6 @@ class SalesActivity : AppCompatActivity() {
                         binding.btnConfirmarPago.isEnabled = false
                     }
                 }
-
-                binding.btnOtros.id -> {
-                    pagosOtros(total) { pagos ->
-                        Log.i("pagosOtros", "pagos: $pagos")
-                        otrosPagos=pagos
-                    }
-
-
-//                    if (montoRecibido > 0 && montoRecibido < total) {
-//                        val aTarjeta = total - montoRecibido
-//                        binding.tvVuelto.text = String.format(Locale.US, "Tarjeta: S/ %.2f", aTarjeta)
-//                        binding.tvVuelto.setTextColor(Color.BLUE)
-//                        binding.btnConfirmarPago.isEnabled = true
-//                    } else {
-//                        binding.tvVuelto.text = "Monto efectivo debe ser menor al total"
-//                        binding.tvVuelto.setTextColor(Color.RED)
-//                        binding.btnConfirmarPago.isEnabled = false
-//                    }
-                }
             }
         }
 
@@ -362,10 +338,8 @@ class SalesActivity : AppCompatActivity() {
         binding.etMontoRecibido.addTextChangedListener { validarPago() }
         binding.toggleTipoComprobante.addOnButtonCheckedListener { group, checkedId, isChecked ->
             if (isChecked) {
-                // Esto prepara una animación de transición para cualquier cambio
-                // que ocurra en el layout (como el cambio de color de fondo)
                 val transition = AutoTransition().apply {
-                    duration = 250 // Milisegundos
+                    duration = 250
                 }
                 TransitionManager.beginDelayedTransition(group, transition)
             }
@@ -373,14 +347,19 @@ class SalesActivity : AppCompatActivity() {
 
         binding.toggleMetodoPago.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {
-                // El panel de efectivo se muestra para Efectivo o Mixto
                 binding.containerEfectivo.visibility =
-                    if (checkedId == binding.btnTarjeta.id) View.GONE else View.VISIBLE
-
-                // Ajustar hint según el modo
+                    if (checkedId == binding.btnTarjeta.id || checkedId == binding.btnOtros.id) View.GONE else View.VISIBLE
+                binding.btnConfirmarPago.isEnabled =
+                    if (checkedId == binding.btnTarjeta.id || checkedId == binding.btnOtros.id) true else false
                 binding.tilMontoRecibido.hint =
                     if (checkedId == binding.btnOtros.id) "Efectivo a recibir" else "Monto Recibido"
 
+                if (checkedId == binding.btnOtros.id) {
+                    pagosOtros(total) { pagos ->
+                        Log.i("pagosOtros", "pagos: $pagos")
+                        otrosPagos = pagos
+                    }
+                }
                 validarPago()
             }
         }
@@ -421,10 +400,10 @@ class SalesActivity : AppCompatActivity() {
                 binding.btnTarjeta.id -> pagos.add(mapOf("metodo" to "TARJETA", "monto" to total))
                 binding.btnOtros.id -> {
 
-                    if (otrosPagos.size==1) {
+                    if (otrosPagos.size == 1) {
                         val id = otrosPagos.keys.first()
                         pagos.add(mapOf("metodo" to obtenerNombrePorId(id), "monto" to total))
-                    }else{
+                    } else {
                         for ((id, monto) in otrosPagos) {
                             pagos.add(mapOf("metodo" to obtenerNombrePorId(id), "monto" to monto))
                         }
@@ -447,6 +426,7 @@ class SalesActivity : AppCompatActivity() {
         binding.btnCancelarPago.setOnClickListener { dialog.dismiss() }
         dialog.show()
     }
+
     private fun obtenerNombrePorId(id: Int): String {
         return when (id) {
             1 -> "EFECTIVO"
@@ -458,10 +438,19 @@ class SalesActivity : AppCompatActivity() {
         }
     }
 
-    fun pagosOtros(total: Double,onResult: (Map<Int, Double>) -> Unit) {
+    fun pagosOtros(total: Double, onResult: (Map<Int, Double>) -> Unit) {
         val binding = LayoutOtrosPagosBinding.inflate(layoutInflater)
         val dialog = DialogHelper.createBaseDialog(this, binding.root)
         var cantSeleccionados = 0
+        var mostrarMas=false
+        binding.btnConfirmarMixto.isEnabled = false
+        binding.etEfectivo.setupCurrencyFormatting()
+        binding.etTarjeta.setupCurrencyFormatting()
+        binding.etTransferencia.setupCurrencyFormatting()
+        binding.etYape.setupCurrencyFormatting()
+        binding.etPlin.setupCurrencyFormatting()
+
+
         // Mapeamos los Checkbox con sus respectivos Inputs e IDs
         val controles = listOf(
             Triple(binding.cbEfectivo, binding.tilEfectivo, 1),
@@ -471,6 +460,44 @@ class SalesActivity : AppCompatActivity() {
             Triple(binding.cbPlin, binding.tilPlin, 5)
         )
 
+        fun actualizarSaldoPendiente() {
+            var sumaActual = 0.0
+            controles.forEach { (cb, til, _) ->
+                if (cb.isChecked) {
+                    sumaActual += til.editText?.text.toString().toDoubleOrNull() ?: 0.0
+                }
+            }
+
+            // Usamos un margen de error mínimo para evitar problemas con decimales (Epsilon)
+            val diferencia = total - sumaActual
+            val esMontoExacto = Math.abs(diferencia) < 0.001
+
+            // Actualización visual del mensaje de saldo
+            when {
+                esMontoExacto -> {
+                    binding.tvSaldoMixto.text = "¡Saldo Completo!"
+                    binding.tvSaldoMixto.setTextColor(Color.parseColor("#4CAF50")) // Verde
+                }
+
+                diferencia > 0 -> {
+                    binding.tvSaldoMixto.text = "Faltan: S/ ${String.format("%.2f", diferencia)}"
+                    binding.tvSaldoMixto.setTextColor(Color.RED)
+                }
+
+                else -> {
+                    binding.tvSaldoMixto.text =
+                        "Sobra: S/ ${String.format("%.2f", Math.abs(diferencia))}"
+                    binding.tvSaldoMixto.setTextColor(Color.parseColor("#FF9800")) // Naranja/Ambar
+                }
+            }
+
+            // REGLA DE ORO: El botón solo se habilita si el monto es exacto y hay 2 seleccionados
+            binding.btnConfirmarMixto.isEnabled = esMontoExacto && cantSeleccionados == 2
+
+            // Opcional: Cambiar la opacidad del botón para que se note más el bloqueo
+            binding.btnConfirmarMixto.alpha =
+                if (binding.btnConfirmarMixto.isEnabled) 1.0f else 0.5f
+        }
         controles.forEach { (checkbox, inputLayout, _) ->
             checkbox.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) {
@@ -480,35 +507,59 @@ class SalesActivity : AppCompatActivity() {
                     } else {
                         // Bloqueo preventivo: No deja marcar el tercero
                         checkbox.isChecked = false
-                        Toast.makeText(this, "Solo se permite seleccionar 2 métodos de pago", Toast.LENGTH_SHORT).show()
+//                        Toast.makeText(this, "Solo se permite seleccionar 2 métodos de pago", Toast.LENGTH_SHORT).show()
+                        ToastHelper.showCustomToast(
+                            binding.root,
+                            "Solo se permite seleccionar 2 métodos de pago",
+                            false
+                        )
                     }
                 } else {
                     cantSeleccionados--
                     inputLayout.isEnabled = false
                     inputLayout.editText?.text?.clear()
                 }
+                actualizarSaldoPendiente()
             }
+            inputLayout.editText?.addTextChangedListener { actualizarSaldoPendiente() }
         }
         binding.btnQuickYape.setOnClickListener { onResult(mapOf(4 to 0.0)); dialog.dismiss() }
         binding.btnQuickPlin.setOnClickListener { onResult(mapOf(5 to 0.0)); dialog.dismiss() }
         binding.btnQuickTransf.setOnClickListener { onResult(mapOf(3 to 0.0)); dialog.dismiss() }
+        binding.btnClose.setOnClickListener {
+            if (!mostrarMas) {
+                dialog.dismiss()
+            } else{
+                mostrarMas=false
+                binding.btnClose.setImageResource(R.drawable.ic_close)
+                binding.containerQuickButtons.visibility = View.VISIBLE
+                binding.containerMixtoFields.visibility = View.GONE
+            }
+        }
 
         binding.btnShowMixto.setOnClickListener {
+            mostrarMas = true
+            binding.btnClose.setImageResource(R.drawable.ic_arrow_black)
             binding.containerQuickButtons.visibility = View.GONE
             binding.containerMixtoFields.visibility = View.VISIBLE
             binding.tvTituloOtros.text = "Configurar Pago Mixto"
-            binding.tvSaldoPagar.text = "Total a pagar: S/ $total"
+            binding.tvSaldoPagar.text = "Total a pagar: S/ ${String.format(Locale.US, "%.2f", total)}"
+            actualizarSaldoPendiente()
 
         }
-        binding.btnClose.setOnClickListener { dialog.dismiss() }
         binding.btnConfirmarMixto.setOnClickListener {
             if (cantSeleccionados != 2) {
-                Toast.makeText(this, "Debe seleccionar exactamente 2 métodos", Toast.LENGTH_SHORT).show()
+                //Toast.makeText(this, "Debe seleccionar exactamente 2 métodos", Toast.LENGTH_SHORT).show()
+                ToastHelper.showCustomToast(
+                    binding.root,
+                    "Debe seleccionar exactamente 2 métodos",
+                    false
+                )
                 return@setOnClickListener
             }
             val seleccionados = mutableMapOf<Int, Double>()
 
-                // 2. Recolectar datos
+            // 2. Recolectar datos
             controles.forEach { (checkbox, inputLayout, id) ->
                 if (checkbox.isChecked) {
                     val monto = inputLayout.editText?.text.toString().toDoubleOrNull() ?: 0.0
@@ -520,14 +571,19 @@ class SalesActivity : AppCompatActivity() {
 
             // 3. Verificar que se recolectaron los 2 montos (que no haya vacíos)
             if (seleccionados.size != 2) {
-                Toast.makeText(this, "Ingrese los montos para ambos métodos", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Ingrese los montos para ambos métodos", Toast.LENGTH_SHORT)
+                    .show()
                 return@setOnClickListener
             }
 
             // 4. Validar suma exacta
             val sumaIngresada = seleccionados.values.sum()
             if (Math.abs(sumaIngresada - total) > 0.01) {
-                Toast.makeText(this, "La suma (S/ $sumaIngresada) no coincide con el total (S/ $total)", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    this,
+                    "La suma (S/ $sumaIngresada) no coincide con el total (S/ $total)",
+                    Toast.LENGTH_LONG
+                ).show()
                 return@setOnClickListener
             }
 
