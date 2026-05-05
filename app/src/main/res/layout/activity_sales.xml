@@ -1,22 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:fitsSystemWindows="true"
-    android:background="#F8F9FA">
+    android:background="#F8F9FA"
+    android:fitsSystemWindows="true">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/layoutBusquedaVenta"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/white_pure"
+        android:elevation="4dp"
         android:paddingHorizontal="16dp"
         android:paddingTop="12dp"
         android:paddingBottom="8dp"
-        android:background="@color/white_pure"
-        android:elevation="4dp"
         app:layout_constraintTop_toTopOf="parent">
+
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilBuscarVenta"
@@ -25,24 +26,28 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="12dp"
             android:hint="Buscar producto..."
-            app:startIconDrawable="@drawable/ic_search"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:endIconDrawable="@drawable/ic_delete"
+            app:endIconMode="custom"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/btnScannerVenta"
             app:layout_constraintStart_toStartOf="parent"
-            app:endIconMode="custom"
-            app:endIconDrawable="@drawable/ic_delete"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toTopOf="parent"
+            app:startIconDrawable="@drawable/ic_search">
 
             <AutoCompleteTextView
                 android:id="@+id/etBuscarVenta"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:dropDownSelector="?android:attr/selectableItemBackground"
-                android:popupBackground="@android:color/white"
                 android:imeOptions="actionDone"
                 android:inputType="text"
                 android:maxLines="1"
-                android:singleLine="true"/>
+                android:popupBackground="@android:color/white"
+                android:singleLine="true" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <androidx.appcompat.widget.AppCompatImageButton
@@ -64,9 +69,9 @@
         android:id="@+id/rvCarrito"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        tools:listitem="@layout/item_venta_producto"
         app:layout_constraintBottom_toTopOf="@+id/cardResumen"
-        app:layout_constraintTop_toBottomOf="@id/layoutBusquedaVenta" />
+        app:layout_constraintTop_toBottomOf="@id/layoutBusquedaVenta"
+        tools:listitem="@layout/item_venta_producto" />
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardResumen"
@@ -108,9 +113,9 @@
                 android:id="@+id/btnCobrar"
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
-                app:backgroundTint="@color/blue_corporative_primary"
                 android:text="FINALIZAR VENTA"
                 android:textSize="16sp"
+                app:backgroundTint="@color/blue_corporative_primary"
                 app:cornerRadius="12dp" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>

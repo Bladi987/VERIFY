@@ -31,6 +31,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:src="@drawable/ic_close"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"/>
@@ -84,17 +85,19 @@
                 app:iconSize="40dp"
                 app:icon="@drawable/ic_transfer"
                 app:iconGravity="top" />
-
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnShowMixto"
-                style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="80dp"
                 android:layout_columnWeight="1"
                 android:layout_margin="4dp"
-                android:backgroundTint="@color/blue_corporative_primary"
                 android:text="MIXTO"
-                app:icon="@drawable/ic_qr_code"
+                app:iconTint="@null"
+                app:iconSize="40dp"
+                app:strokeColor="@color/blue_corporative_primary"
+                app:strokeWidth="2dp"
+                app:icon="@drawable/ic_pagos_mixtos"
                 app:iconGravity="top" />
         </GridLayout>
 
@@ -103,8 +106,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:visibility="gone"
-            tools:visibility="visible">
+            android:visibility="gone">
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">

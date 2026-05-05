@@ -26,8 +26,7 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_gravity="center"
-                android:src="@drawable/ic_arrow_upward"
-                app:tint="@color/semantic_success_green" />
+                android:src="@drawable/ic_arrow_upward" />
         </FrameLayout>
 
         <LinearLayout

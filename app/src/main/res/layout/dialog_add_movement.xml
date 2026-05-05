@@ -17,17 +17,21 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
-            android:text="Nuevo Movimiento de caja"
             android:gravity="center"
-            android:textStyle="bold"
+            android:text="Nuevo Movimiento de caja"
             android:textColor="@color/grey_text_dark"
-            android:textSize="16sp" />
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Tipo de movimiento">
+            android:hint="Tipo de movimiento"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp">
 
             <AutoCompleteTextView
                 android:id="@+id/actvMovementType"
@@ -43,7 +47,11 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:hint="Monto (S/)"
-            app:prefixText="S/ " >
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:prefixText="S/ ">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etMovementAmount"
@@ -58,7 +66,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:hint="Motivo / Concepto">
+            android:hint="Motivo / Concepto"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etMovementReason"

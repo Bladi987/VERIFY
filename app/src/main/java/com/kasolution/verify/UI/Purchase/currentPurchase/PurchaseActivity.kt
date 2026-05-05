@@ -44,8 +44,8 @@ class PurchaseActivity : AppCompatActivity() {
         AppProvider.providePurchaseViewModelFactory(this)
     }
     override fun onCreate(savedInstanceState: Bundle?) {
-        binding = ActivityPurchaseBinding.inflate(layoutInflater)
         super.onCreate(savedInstanceState)
+        binding = ActivityPurchaseBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setupScannerReceiver()
         setupBackPressedHandling()

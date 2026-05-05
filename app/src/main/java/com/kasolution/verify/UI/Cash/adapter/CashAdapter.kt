@@ -29,7 +29,8 @@ class CashAdapter(
             val hora = movement["fecha"]?.toString() ?: "--:--"
             val monto = movement["monto"]?.toString()?.toDoubleOrNull() ?: 0.0
 
-            binding.tvMovementReason.text = if (motivo.contains("Venta #", true)) motivo else motivo.capitalize()
+            binding.tvMovementReason.text =
+                if (motivo.contains("Venta #", true)) motivo else motivo.capitalize()
             // Si la fecha viene como "2026-04-03 10:58:20", podrías tomar solo la hora si prefieres
             binding.tvMovementTime.text = hora.split(" ").lastOrNull() ?: hora
 
@@ -44,36 +45,44 @@ class CashAdapter(
                         icon = R.drawable.ic_yape, // Asegúrate de tener este drawable
                         colorStr = "#8E44AD", // Morado Yape
                         prefix = "+ S/ ",
-                        amount = monto
+                        amount = monto,
+                        keepOriginalColors = true
                     )
                     binding.tvMovementReason.text = "Venta Yape"
                 }
+
                 "PLIN" -> {
                     setupItem(
                         icon = R.drawable.ic_plin, // Asegúrate de tener este drawable
                         colorStr = "#00B4FF", // Celeste Plin
                         prefix = "+ S/ ",
-                        amount = monto
+                        amount = monto,
+                        keepOriginalColors = true
                     )
                     binding.tvMovementReason.text = "Venta Plin"
                 }
+
                 "TARJETA" -> {
                     setupItem(
                         icon = R.drawable.ic_tarjeta,
                         colorStr = "#34495E", // Gris oscuro/Azul profesional
                         prefix = "+ S/ ",
-                        amount = monto
+                        amount = monto,
+                        keepOriginalColors = true
                     )
                     binding.tvMovementReason.text = "Venta Tarjeta"
                 }
+
                 "EFECTIVO", "VENTA" -> {
                     setupItem(
                         icon = R.drawable.ic_cash, // Icono de billetes
                         colorInt = ContextCompat.getColor(context, R.color.semantic_success_green),
                         prefix = "+ S/ ",
-                        amount = monto
+                        amount = monto,
+                        keepOriginalColors = true
                     )
                 }
+
                 "TRANSFERENCIA" -> {
                     setupItem(
                         icon = R.drawable.ic_account_balance,
@@ -82,6 +91,7 @@ class CashAdapter(
                         amount = monto
                     )
                 }
+
                 "EGRESO", "COMPRA" -> {
                     setupItem(
                         icon = R.drawable.ic_arrow_downward,
@@ -90,14 +100,19 @@ class CashAdapter(
                         amount = monto
                     )
                 }
+
                 "APERTURA" -> {
                     setupItem(
                         icon = R.drawable.ic_cash_register,
-                        colorInt = ContextCompat.getColor(context, R.color.blue_corporative_primary),
+                        colorInt = ContextCompat.getColor(
+                            context,
+                            R.color.blue_corporative_primary
+                        ),
                         prefix = "S/ ",
                         amount = monto
                     )
                 }
+
                 else -> {
                     setupItem(
                         icon = R.drawable.ic_info,
@@ -110,11 +125,27 @@ class CashAdapter(
 
             binding.root.setOnClickListener { onClickListener(movement) }
         }
-        private fun setupItem(icon: Int, colorInt: Int? = null, colorStr: String? = null, prefix: String, amount: Double) {
-            val finalColor = if (colorStr != null) Color.parseColor(colorStr) else colorInt ?: Color.BLACK
+
+        private fun setupItem(
+            icon: Int,
+            colorInt: Int? = null,
+            colorStr: String? = null,
+            prefix: String,
+            amount: Double,
+            keepOriginalColors: Boolean = false
+        ) {
+            val finalColor = colorStr?.let { Color.parseColor(it) } ?: colorInt ?: Color.BLACK
 
             binding.ivMovementIcon.setImageResource(icon)
-            binding.ivMovementIcon.setColorFilter(finalColor)
+
+            if (keepOriginalColors) {
+                // Quitamos cualquier filtro previo para ver los colores reales del logo
+                binding.ivMovementIcon.clearColorFilter()
+            } else {
+                // Aplicamos el color solo a los iconos genéricos
+                binding.ivMovementIcon.setColorFilter(finalColor)
+            }
+
             binding.tvMovementAmount.text = "$prefix${String.format(Locale.US, "%.2f", amount)}"
             binding.tvMovementAmount.setTextColor(finalColor)
         }
@@ -157,7 +188,8 @@ class CashAdapter(
 
         @Suppress("UNCHECKED_CAST")
         override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
-            displayedList = (results?.values as? List<Map<String, Any>>)?.toMutableList() ?: mutableListOf()
+            displayedList =
+                (results?.values as? List<Map<String, Any>>)?.toMutableList() ?: mutableListOf()
             notifyDataSetChanged()
         }
     }
