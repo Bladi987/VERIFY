@@ -19,7 +19,13 @@ class EmpleadosViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(EmpleadosViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return EmpleadosViewModel(getEmpleadosUseCase, saveEmpleadoUseCase,updateEmpleadoUseCase,deleteEmpleadoUseCase, socketManager) as T
+            return EmpleadosViewModel(
+                getEmpleadosUseCase,
+                saveEmpleadoUseCase,
+                updateEmpleadoUseCase,
+                deleteEmpleadoUseCase,
+                socketManager
+            ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

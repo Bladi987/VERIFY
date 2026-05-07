@@ -10,6 +10,7 @@ import com.kasolution.verify.UI.Dashboard.viewModel.DashboardViewModelFactory
 import com.kasolution.verify.UI.Employees.viewModel.EmpleadosViewModelFactory
 import com.kasolution.verify.UI.Inventory.viewModel.InventoryViewModelFactory
 import com.kasolution.verify.UI.Purchase.viewModel.PurchaseViewModelFactory
+import com.kasolution.verify.UI.Reports.viewModel.ReportesViewModelFactory
 import com.kasolution.verify.UI.Sales.viewModel.SalesViewModelFactory
 import com.kasolution.verify.UI.Suppliers.viewModel.SuppliersViewModelFactory
 import com.kasolution.verify.data.local.SessionManager
@@ -22,6 +23,7 @@ import com.kasolution.verify.data.repository.ClientsRepository
 import com.kasolution.verify.data.repository.EmpleadoRepository
 import com.kasolution.verify.data.repository.InventoryRepository
 import com.kasolution.verify.data.repository.PurchaseRepository
+import com.kasolution.verify.data.repository.ReporteRepository
 import com.kasolution.verify.data.repository.SalesRepository
 import com.kasolution.verify.data.repository.SuppliersRepository
 import com.kasolution.verify.domain.purchase.DeletePurchaseUseCase
@@ -58,6 +60,11 @@ import com.kasolution.verify.domain.usecases.Suppliers.DeleteSupplierUseCase
 import com.kasolution.verify.domain.usecases.Suppliers.GetSuppliersUseCase
 import com.kasolution.verify.domain.usecases.Suppliers.SaveSupplierUseCase
 import com.kasolution.verify.domain.usecases.Suppliers.UpdateSupplierUseCase
+import com.kasolution.verify.domain.usecases.reports.GetCajaMovimientosUseCase
+import com.kasolution.verify.domain.usecases.reports.GetInventarioResumenUseCase
+import com.kasolution.verify.domain.usecases.reports.GetMetodosPagoUseCase
+import com.kasolution.verify.domain.usecases.reports.GetTopProductosUseCase
+import com.kasolution.verify.domain.usecases.reports.GetVentasUtilidadUseCase
 
 object AppProvider {
 
@@ -76,6 +83,7 @@ object AppProvider {
     private var purchaseRepositoryInstance: PurchaseRepository? = null
     private var cashRepositoryInstance: CashRepository? = null
     private var sessionManagerInstance: SessionManager? = null
+    private var reporteRepositoryInstance: ReporteRepository? = null
 
     /**
      * Inicializa la conexión usando la IP guardada.
@@ -227,6 +235,7 @@ object AppProvider {
             socketManager
         )
     }
+
     // ----scanner------
     fun provideInventoryRepository(): InventoryRepository {
         return getInventoryRepository()
@@ -320,6 +329,29 @@ object AppProvider {
         )
     }
 
+    //REPORTES
+    private fun getReporteRepository(): ReporteRepository {
+        return reporteRepositoryInstance ?: synchronized(this) {
+            reporteRepositoryInstance ?: ReporteRepository(socketManager).also {
+                reporteRepositoryInstance = it
+            }
+        }
+    }
+    fun provideReportesViewModelFactory(context: Context): ReportesViewModelFactory {
+        val sessionManager = provideSessionManager(context)
+        val repoReporte = getReporteRepository()
+
+        return ReportesViewModelFactory(
+            sesionManager = sessionManager,
+            getVentasUtilidadUseCase = GetVentasUtilidadUseCase(repoReporte),
+            getTopProductosUseCase = GetTopProductosUseCase(repoReporte),
+            getMetodosPagoUseCase = GetMetodosPagoUseCase(repoReporte),
+            getInventarioResumenUseCase = GetInventarioResumenUseCase(repoReporte),
+            getCajaMovimientosUseCase = GetCajaMovimientosUseCase(repoReporte),
+            socketManager = socketManager
+        )
+    }
+
 
     // --- DASHBOARD ---
 
@@ -357,6 +389,8 @@ object AppProvider {
         categoriesRepositoryInstance?.clear()
         salesRepositoryInstance?.clear()
         purchaseRepositoryInstance?.clear() // Limpiar Compras
+        cashRepositoryInstance?.clear()
+        reporteRepositoryInstance?.clear()
 
         authRepositoryInstance = null
         empleadoRepositoryInstance = null
@@ -366,7 +400,7 @@ object AppProvider {
         categoriesRepositoryInstance = null
         salesRepositoryInstance = null
         purchaseRepositoryInstance = null
-        cashRepositoryInstance?.clear()
         cashRepositoryInstance = null
+        reporteRepositoryInstance = null
     }
 }

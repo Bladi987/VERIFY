@@ -1,94 +1,93 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white_pure">
+    android:background="#F8F9FA">
 
-    <LinearLayout
+    <!-- Header con Elevación Cero para un look limpio -->
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
+        android:background="@android:color/white"
+        app:elevation="0dp">
 
-        <TextView
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbarReportes"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:title="Análisis de Negocio"
+            app:titleTextColor="@color/grey_text_dark" />
+
+        <!-- Selector de Rango de Fechas -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            android:text="Resumen de Negocio"
-            android:textColor="@color/grey_text_dark"
-            android:textSize="24sp"
-            android:textStyle="bold" />
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingBottom="8dp"
+            android:gravity="center_vertical">
 
-        <HorizontalScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            android:scrollbars="none">
-
-            <com.google.android.material.chip.ChipGroup
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:selectionRequired="true"
-                app:singleSelection="true">
-
-                <com.google.android.material.chip.Chip
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Hoy"
-                    app:chipBackgroundColor="@color/bg_chip_selector" />
-
-            </com.google.android.material.chip.ChipGroup>
-        </HorizontalScrollView>
-
-        <GridLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            android:alignmentMode="alignMargins"
-            android:columnCount="2">
-
-            <com.google.android.material.card.MaterialCardView
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSelectRange"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_columnWeight="1"
-                android:layout_margin="8dp"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="2dp">
+                android:layout_weight="1"
+                android:text="Este Mes: May 2026"
+                android:textAllCaps="false"
+                android:textColor="#444444"
+                app:cornerRadius="8dp"
+                app:icon="@drawable/ic_calendar"
+                app:strokeColor="#DDDDDD" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+            <ImageButton
+                android:id="@+id/btnExportReport"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_shared"
+                app:tint="@color/blue_corporative_primary" />
+        </LinearLayout>
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Ventas"
-                        android:textColor="@color/grey_text_secondary"
-                        android:textSize="12sp" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:id="@+id/tvTotalVentas"
-                        android:text="S/ 1,250.00"
-                        android:textColor="@color/design_default_color_primary"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-        </GridLayout>
-
-        <com.google.android.material.card.MaterialCardView
+        <!-- Pestañas de Navegación -->
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tabLayoutReportes"
             android:layout_width="match_parent"
-            android:layout_height="300dp"
-            app:cardBackgroundColor="#F8F9FA"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="0dp"></com.google.android.material.card.MaterialCardView>
+            android:layout_height="wrap_content"
+            app:tabIndicatorColor="@color/blue_corporative_primary"
+            app:tabIndicatorHeight="3dp"
+            app:tabSelectedTextColor="@color/blue_corporative_primary"
+            app:tabTextColor="#777777"
+            app:tabMode="fixed"
+            app:tabRippleColor="@null"/>
 
-    </LinearLayout>
-</androidx.core.widget.NestedScrollView>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Contenedor de los Fragmentos (Finanzas, Inventario, Caja) -->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPagerReportes"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+    <!-- Progress OverLay para cuando cargan los datos del Socket -->
+    <FrameLayout
+        android:id="@+id/loadingOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80FFFFFF"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true">
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:indeterminate="true"
+            app:indicatorColor="@color/blue_corporative_primary" />
+    </FrameLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

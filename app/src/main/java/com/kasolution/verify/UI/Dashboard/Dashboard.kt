@@ -18,6 +18,7 @@ import com.kasolution.verify.UI.Employees.EmployeesActivity
 import com.kasolution.verify.UI.Inventory.InventoryActivity
 import com.kasolution.verify.UI.Purchase.currentPurchase.PurchaseActivity
 import com.kasolution.verify.UI.Purchase.history.PurchaseHistoryActivity
+import com.kasolution.verify.UI.Reports.ReportsActivity
 import com.kasolution.verify.UI.Sales.CurrentSale.SalesActivity
 import com.kasolution.verify.UI.Sales.History.HistoryActivity
 import com.kasolution.verify.UI.Settings.SettingsActivity
@@ -146,6 +147,8 @@ class Dashboard : AppCompatActivity() {
 
             "Reportes" -> {
                 // Lógica para la opción de Reportes
+                val intent= Intent(this, ReportsActivity::class.java)
+                startActivity(intent)
             }
 
             "Caja" -> {
