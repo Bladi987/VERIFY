@@ -42,6 +42,7 @@ class ReporteCajaFragment : Fragment() {
             val totalIngresos = movimientos.filter { it.tipo == "INGRESO" }.sumOf { it.monto }
             val totalEgresos = movimientos.filter { it.tipo == "EGRESO" }.sumOf { it.monto }
 
+
             binding.tvTotalIngresosCaja.text = "S/ %.2f".format(totalIngresos)
             binding.tvTotalEgresosCaja.text = "S/ %.2f".format(totalEgresos)
 
