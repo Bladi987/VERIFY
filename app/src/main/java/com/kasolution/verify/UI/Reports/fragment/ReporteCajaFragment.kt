@@ -35,13 +35,18 @@ class ReporteCajaFragment : Fragment() {
 
     private fun setupObservers() {
         viewModel.cajaMovimientos.observe(viewLifecycleOwner) { movimientos ->
-            if (movimientos == null) return@observe
-            Log.d("ReporteCajaFragment", "Movimientos recibidos: $movimientos")
+            // Si la lista es nula o vacía (como cuando limpiamos en el ViewModel), resetear gráfico
+            if (movimientos.isNullOrEmpty()) {
+                updateBalanceChart(0f, 0f)
+                binding.tvTotalIngresosCaja.text = "S/ 0.00"
+                binding.tvTotalEgresosCaja.text = "S/ 0.00"
+                setupRecyclerView(emptyList())
+                return@observe
+            }
 
-            // Usamos 'monto' porque es el nombre en el nuevo Data Class (mapeado de 'total')
-            val totalIngresos = movimientos.filter { it.tipo == "INGRESO" }.sumOf { it.monto }
-            val totalEgresos = movimientos.filter { it.tipo == "EGRESO" }.sumOf { it.monto }
-
+            // LÓGICA FLEXIBLE:
+            val totalEgresos = movimientos.filter { it.tipo.equals("EGRESO", true) }.sumOf { Math.abs(it.monto) }
+            val totalIngresos = movimientos.filter { !it.tipo.equals("EGRESO", true) }.sumOf { Math.abs(it.monto) }
 
             binding.tvTotalIngresosCaja.text = "S/ %.2f".format(totalIngresos)
             binding.tvTotalEgresosCaja.text = "S/ %.2f".format(totalEgresos)

@@ -28,13 +28,19 @@ class StockCriticoAdapter(private val productos: List<ProductoCritico>) :
 
         holder.binding.apply {
             tvNombreProducto.text = item.nombre
-            tvStockDetalle.text = "Stock actual: ${item.stock_actual}"
 
-            // Opcional: Resaltar en rojo si el stock es crítico (ej. menor a 5)
-            if (item.stock_actual <= 5) {
-                tvStockDetalle.setTextColor(Color.RED)
+            // Personalización según el estado
+            if (item.estado == "AGOTADO") {
+                tvStockDetalle.text = "¡PRODUCTO AGOTADO!"
+                tvStockDetalle.setTextColor(Color.parseColor("#D32F2F")) // Rojo fuerte
+
+                // Si tienes un icono o el fondo del item, podrías cambiarlo aquí
+                root.setBackgroundColor(Color.parseColor("#12FF0000")) // Un toque de rojo transparente de fondo
             } else {
-                tvStockDetalle.setTextColor(Color.GRAY)
+                tvStockDetalle.text = "Stock crítico: ${item.stock_actual} unidades"
+                tvStockDetalle.setTextColor(Color.parseColor("#F57C00")) // Naranja para advertencia
+
+                root.setBackgroundColor(Color.TRANSPARENT)
             }
         }
     }

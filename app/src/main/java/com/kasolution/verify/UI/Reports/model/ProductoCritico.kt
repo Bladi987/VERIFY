@@ -7,5 +7,6 @@ import kotlinx.parcelize.Parcelize
 data class ProductoCritico(
     val nombre: String,
     val stock_actual: Int,
-    val stock_minimo: Int // Opcional, por si quieres mostrar "Faltan X para el mínimo"
+    val stock_minimo: Int,
+    val estado:String
 ): Parcelable

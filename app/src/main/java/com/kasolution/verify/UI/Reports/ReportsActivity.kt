@@ -33,6 +33,7 @@ class ReportsActivity : AppCompatActivity() {
         setupViewPager()
         setupListeners()
         setupObservers()
+        cargarDatosPredeterminados()
     }
 
     private fun setupViewPager() {
@@ -100,14 +101,35 @@ class ReportsActivity : AppCompatActivity() {
         picker.show(supportFragmentManager, "range_picker")
 
         picker.addOnPositiveButtonClickListener { selection ->
-            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-            val startDate = sdf.format(Date(selection.first))
-            val endDate = sdf.format(Date(selection.second))
-
+            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply {
+                timeZone = java.util.TimeZone.getTimeZone("UTC")
+            }
+            val startDate = sdf.format(selection.first)
+            val endDate = sdf.format(selection.second)
             binding.btnSelectRange.text = "$startDate a $endDate"
-
-            // Disparamos la carga masiva en el ViewModel
             viewModel.loadAllReportes(startDate, endDate)
         }
+    }
+    private fun cargarDatosPredeterminados() {
+        val (inicio, fin) = obtenerRangoMesActual()
+
+        // 1. Actualizamos visualmente el botón para que el usuario sepa qué fechas se están cargando
+        binding.btnSelectRange.text = "$inicio a $fin"
+
+        // 2. Disparamos la petición al ViewModel
+        viewModel.loadAllReportes(inicio, fin)
+    }
+    private fun obtenerRangoMesActual(): Pair<String, String> {
+        val sdf = SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+        val calendario = java.util.Calendar.getInstance()
+
+        // Fecha Fin: Hoy (08/05/2026)
+        val fechaFin = sdf.format(calendario.time)
+
+        // Fecha Inicio: Ajustamos al día 1 del mes actual (01/05/2026)
+        calendario.set(java.util.Calendar.DAY_OF_MONTH, 1)
+        val fechaInicio = sdf.format(calendario.time)
+
+        return Pair(fechaInicio, fechaFin)
     }
 }

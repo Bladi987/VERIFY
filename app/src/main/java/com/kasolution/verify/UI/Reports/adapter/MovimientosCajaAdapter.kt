@@ -25,19 +25,22 @@ class MovimientosCajaAdapter(private val movimientos: List<ReporteCajaMovimiento
         val item = movimientos[position]
 
         holder.binding.apply {
-            // 2. MOSTRAR CONCEPTOS: Ahora usamos el campo 'concepto' del log
             tvConcepto.text = item.concepto ?: "Venta General"
-
-            // 3. MOSTRAR FECHA: Limpiamos las barras invertidas que envía el PHP
             tvFechaMovimiento.text = item.fecha?.replace("\\", "")
 
-            // 4. LÓGICA DE COLORES Y MONTOS
-            if (item.tipo == "INGRESO") {
-                tvMonto.text = "+ S/ %.2f".format(item.monto)
-                tvMonto.setTextColor(Color.parseColor("#2E7D32")) // Verde oscuro
+            // Aseguramos que el monto sea positivo para el formateo,
+            // nosotros controlamos el signo visualmente
+            val montoAbsoluto = Math.abs(item.monto)
+
+            // CORRECCIÓN: Si no es EGRESO, es un INGRESO (venga como Yape, Efectivo, etc.)
+            val esEgreso = item.tipo.equals("EGRESO", ignoreCase = true)
+
+            if (!esEgreso) {
+                tvMonto.text = "+ S/ %.2f".format(montoAbsoluto)
+                tvMonto.setTextColor(Color.parseColor("#2E7D32")) // Verde
             } else {
-                tvMonto.text = "- S/ %.2f".format(item.monto)
-                tvMonto.setTextColor(Color.RED)
+                tvMonto.text = "- S/ %.2f".format(montoAbsoluto)
+                tvMonto.setTextColor(Color.RED) // Rojo
             }
         }
     }

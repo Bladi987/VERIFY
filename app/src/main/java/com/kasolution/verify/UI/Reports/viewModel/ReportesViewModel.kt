@@ -75,10 +75,14 @@ class ReportesViewModel(
 
         this.fechaInicioActual = fInicio
         this.fechaFinActual = fFin
+
+        // LIMPIEZA PREVENTIVA: Vaciamos las listas actuales para que la UI se limpie
+        _cajaMovimientos.postValue(emptyList())
+        _ventasUtilidad.postValue(emptyList())
+
         _isLoading.postValue(true)
 
         if (socketManager.isConnected) {
-            // Disparamos todas las peticiones en paralelo
             getVentasUtilidadUseCase(fInicio, fFin, UUID.randomUUID().toString())
             getTopProductosUseCase(fInicio, fFin, UUID.randomUUID().toString())
             getMetodosPagoUseCase(fInicio, fFin, UUID.randomUUID().toString())
