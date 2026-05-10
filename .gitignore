@@ -1,7 +1,7 @@
 *.iml
 .gradle/
 /local.properties
-.idea/  <-- ESTA LÍNEA IGNORA TODO LO QUE TE ESTÁ MOLESTANDO
+.idea/
 .DS_Store
 /build/
 /captures/
