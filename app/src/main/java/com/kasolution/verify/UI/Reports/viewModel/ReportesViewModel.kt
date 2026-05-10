@@ -4,6 +4,7 @@ package com.kasolution.verify.UI.Reports.viewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.kasolution.verify.UI.Reports.model.ProductoRanking
 import com.kasolution.verify.data.local.SessionManager
 import com.kasolution.verify.data.network.SocketManager
 import com.kasolution.verify.domain.reports.model.*
@@ -26,8 +27,8 @@ class ReportesViewModel(
     private val _ventasUtilidad = MutableLiveData<List<ReporteVenta>>()
     val ventasUtilidad: LiveData<List<ReporteVenta>> get() = _ventasUtilidad
 
-    private val _topProductos = MutableLiveData<List<ProductoTop>>()
-    val topProductos: LiveData<List<ProductoTop>> get() = _topProductos
+    private val _topProductos = MutableLiveData<List<ProductoRanking>>()
+    val topProductos: LiveData<List<ProductoRanking>> get() = _topProductos
 
     private val _metodosPago = MutableLiveData<List<ReporteMetodoPago>>()
     val metodosPago: LiveData<List<ReporteMetodoPago>> get() = _metodosPago

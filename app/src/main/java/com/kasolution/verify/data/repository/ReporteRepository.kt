@@ -6,6 +6,7 @@ import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
+import com.kasolution.verify.UI.Reports.model.ProductoRanking
 import com.kasolution.verify.data.model.SocketResponse
 import com.kasolution.verify.data.network.SocketManager
 import com.kasolution.verify.domain.reports.model.*
@@ -17,7 +18,7 @@ class ReporteRepository(private val socketManager: SocketManager) {
 
     // --- Callbacks para el ViewModel ---
     var onVentasUtilidadReceived: ((List<ReporteVenta>) -> Unit)? = null
-    var onTopProductosReceived: ((List<ProductoTop>) -> Unit)? = null
+    var onTopProductosReceived: ((List<ProductoRanking>) -> Unit)? = null
     var onMetodosPagoReceived: ((List<ReporteMetodoPago>) -> Unit)? = null
     var onInventarioResumenReceived: ((ReporteInventario) -> Unit)? = null
     var onCajaMovimientosReceived: ((List<ReporteCajaMovimiento>) -> Unit)? = null
@@ -58,8 +59,8 @@ class ReporteRepository(private val socketManager: SocketManager) {
                     }
 
                     "REPORTE_TOP_PRODUCTOS" -> {
-                        val type = object : TypeToken<SocketResponse<List<ProductoTop>>>() {}.type
-                        val response: SocketResponse<List<ProductoTop>> = gson.fromJson(json, type)
+                        val type = object : TypeToken<SocketResponse<List<ProductoRanking>>>() {}.type
+                        val response: SocketResponse<List<ProductoRanking>> = gson.fromJson(json, type)
                         Handler(Looper.getMainLooper()).post {
                             onTopProductosReceived?.invoke(
                                 response.data ?: emptyList()

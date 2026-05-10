@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.kasolution.verify.UI.Reports.adapter.RankingAdapter
 import com.kasolution.verify.UI.Reports.adapter.StockCriticoAdapter
 import com.kasolution.verify.UI.Reports.viewModel.ReportesViewModel
 import com.kasolution.verify.databinding.FragmentReporteInventarioBinding
@@ -62,6 +63,10 @@ class ReporteInventarioFragment : Fragment() {
                 val listaSegura = it.lista_productos_criticos ?: emptyList()
                 binding.rvStockCritico.adapter = StockCriticoAdapter(listaSegura)
             }
+        }
+        viewModel.topProductos.observe(viewLifecycleOwner) { lista ->
+            val adapterRanking = RankingAdapter(lista)
+            binding.rvRankingProductos.adapter = adapterRanking
         }
 
     }
