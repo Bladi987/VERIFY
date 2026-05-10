@@ -38,58 +38,88 @@
                     android:layout_height="1dp"
                     android:layout_marginVertical="12dp"
                     android:background="#EEEEEE" />
-
-                <LinearLayout
+                <HorizontalScrollView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
+                    android:fillViewport="true"
+                    android:scrollbars="none">
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:orientation="horizontal">
 
-                        <TextView
-                            android:layout_width="wrap_content"
+                        <LinearLayout
+                            android:id="@+id/itemCosto"
+                            android:layout_width="200dp"
                             android:layout_height="wrap_content"
-                            android:text="Costo (Capital)"
-                            android:textColor="#777777"
-                            android:textSize="12sp" />
+                            android:padding="10dp"
+                            android:orientation="vertical">
 
-                        <TextView
-                            android:layout_width="wrap_content"
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Costo (Capital)"
+                                android:textColor="#777777"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:id="@+id/tvTotalCosto"
+                                android:text="S/ 0.00"
+                                android:textColor="@color/black"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/itemVenta"
+                            android:layout_width="200dp"
                             android:layout_height="wrap_content"
-                            android:id="@+id/tvTotalCosto"
-                            android:text="S/ 0.00"
-                            android:textColor="@color/black"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
+                            android:padding="10dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Precio Venta"
+                                android:textColor="#777777"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:id="@+id/tvTotalVentaPotencial"
+                                android:text="S/ 0.00"
+                                android:textColor="@color/primary_blue"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                        <LinearLayout
+                            android:id="@+id/itemGanancia"
+                            android:layout_width="200dp"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Ganancia"
+                                android:textColor="#777777"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:id="@+id/tvGanacia"
+                                android:text="S/ 0.00"
+                                android:textColor="@color/green_pos"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
                     </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Precio Venta"
-                            android:textColor="#777777"
-                            android:textSize="12sp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:id="@+id/tvTotalVentaPotencial"
-                            android:text="S/ 0.00"
-                            android:textColor="@color/primary_blue"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-                </LinearLayout>
+                </HorizontalScrollView>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

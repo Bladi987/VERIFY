@@ -18,15 +18,30 @@ class ReporteInventarioFragment : Fragment() {
     private val binding get() = _binding!!
     private val viewModel: ReportesViewModel by activityViewModels()
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         _binding = FragmentReporteInventarioBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        setupCardValoritation()
         setupObservers()
+    }
+
+    private fun setupCardValoritation() {
+        val displayMetrics = resources.displayMetrics
+        val screenWidth = displayMetrics.widthPixels
+        val halfScreenWidth = screenWidth / 2
+
+// Asignar a cada contenedor
+        binding.itemCosto.layoutParams.width = halfScreenWidth
+        binding.itemVenta.layoutParams.width = halfScreenWidth
+        binding.itemGanancia.layoutParams.width = halfScreenWidth
     }
 
     private fun setupObservers() {
@@ -35,6 +50,8 @@ class ReporteInventarioFragment : Fragment() {
             data?.let {
                 binding.tvTotalCosto.text = "S/ %.2f".format(it.capital_invertido)
                 binding.tvTotalVentaPotencial.text = "S/ %.2f".format(it.valor_venta_estimado)
+                binding.tvGanacia.text = "S/ %.2f".format(it.valor_venta_estimado - it.capital_invertido)
+
 
                 // 2. Configuramos el LayoutManager (solo una vez es necesario)
                 if (binding.rvStockCritico.layoutManager == null) {
