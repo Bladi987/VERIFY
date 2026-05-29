@@ -8,8 +8,16 @@ class Employee(
     val id: Int,
     val nombre: String,
     val usuario: String,
-    val rol: String,
-    val estado: Boolean
+    val correo: String?,
+    val telefono: String?,
+    val idSucursalBase: Int,
+    val sucursalNombre: String,
+    val idRol: Int,
+    val nombreRol: String,
+    val rolSlug: String,
+    val estado: Boolean,
+    val ultimoLogin: String?,
+    val createdAt: String?
 ) : Parcelable {
     val initials: String
         get() = nombre.split(" ")

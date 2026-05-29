@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginVertical="4dp"
+    app:cardBackgroundColor="@color/white_pure"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp">
+
+        <TextView
+            android:id="@+id/tv_permission_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:text="Crear Ventas Directas"
+            android:textColor="@color/grey_text_dark"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@+id/switch_permission"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tv_permission_description"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Módulo: Ventas (FUNC_VENTAS_CREATE)"
+            android:textColor="@color/grey_text_secondary"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="@+id/tv_permission_name"
+            app:layout_constraintStart_toStartOf="@+id/tv_permission_name"
+            app:layout_constraintTop_toBottomOf="@+id/tv_permission_name" />
+
+        <TextView
+            android:id="@+id/tv_permission_source"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="👥 Heredado de su Rol"
+            android:textColor="@color/selected_item_blue"
+            android:textSize="11sp"
+            android:textStyle="italic"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="@+id/tv_permission_description"
+            app:layout_constraintStart_toStartOf="@+id/tv_permission_description"
+            app:layout_constraintTop_toBottomOf="@+id/tv_permission_description" />
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switch_permission"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.cardview.widget.CardView>

@@ -29,7 +29,8 @@
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.3" />
 
         <TextView
             android:id="@+id/tv_employee_name"
@@ -49,12 +50,50 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:text="Cajero Principal"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="Administrador"
             android:textColor="@color/grey_text_secondary"
             android:textSize="14sp"
             app:layout_constraintEnd_toStartOf="@+id/tv_employee_status"
             app:layout_constraintStart_toEndOf="@+id/tv_initials"
             app:layout_constraintTop_toBottomOf="@+id/tv_employee_name" />
+
+        <TextView
+            android:id="@+id/tv_employee_branch"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Sede Cusco"
+            android:textColor="@color/grey_text_secondary"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="@+id/tv_employee_name"
+            app:layout_constraintStart_toStartOf="@+id/tv_employee_name"
+            app:layout_constraintTop_toBottomOf="@+id/tv_employee_role" />
+
+        <TextView
+            android:id="@+id/tv_employee_phone"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="📞 +51 987654321"
+            android:textColor="@color/grey_text_secondary"
+            android:textSize="11sp"
+            app:layout_constraintEnd_toEndOf="@+id/tv_employee_name"
+            app:layout_constraintStart_toStartOf="@+id/tv_employee_name"
+            app:layout_constraintTop_toBottomOf="@+id/tv_employee_branch" />
+
+        <TextView
+            android:id="@+id/tv_employee_email"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="✉️ javier.mendoza@email.com"
+            android:textColor="@color/grey_text_secondary"
+            android:textSize="11sp"
+            app:layout_constraintEnd_toStartOf="@+id/tv_employee_status"
+            app:layout_constraintStart_toStartOf="@+id/tv_employee_name"
+            app:layout_constraintTop_toBottomOf="@+id/tv_employee_phone" />
 
         <TextView
             android:id="@+id/tv_employee_status"
@@ -68,7 +107,8 @@
             android:textSize="12sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.3" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

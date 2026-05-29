@@ -2,6 +2,7 @@ package com.kasolution.verify.UI.Employees.adapter
 
 import android.content.Context
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.Filterable
@@ -32,45 +33,57 @@ class EmpleadosAdapter(
             // 1. Asignar Texto
             binding.tvInitials.text = empleado.initials
             binding.tvEmployeeName.text = empleado.nombre
-            binding.tvEmployeeRole.text = empleado.rol.capitalize()
+            binding.tvEmployeeBranch.text = empleado.sucursalNombre
+            binding.tvEmployeeRole.text = empleado.nombreRol.ifEmpty { "Sin rol asignado" }
 
 
-            // 2. Lógica del Tag de Estado (Usa los Drawables y colores definidos)
+            if (!empleado.telefono.isNullOrEmpty()) {
+                binding.tvEmployeePhone.visibility = View.VISIBLE
+                binding.tvEmployeePhone.text = "📞 ${empleado.telefono}"
+            } else {
+                binding.tvEmployeePhone.visibility = View.GONE
+            }
+
+            // 4. NUEVO: Gestión defensiva de Correo (Se oculta si es nulo o vacío)
+            if (!empleado.correo.isNullOrEmpty()) {
+                binding.tvEmployeeEmail.visibility = View.VISIBLE
+                binding.tvEmployeeEmail.text = "✉️ ${empleado.correo}"
+            } else {
+                binding.tvEmployeeEmail.visibility = View.GONE
+            }
+
+            // 5. Estado Operacional (Tag Activo / Inactivo)
             if (empleado.estado) {
-                // Estado ACTIVO: Fondo verde (rounded_tag_green)
                 binding.tvEmployeeStatus.apply {
-                    text = itemView.context.getString(R.string.status_active) // Ej: "ACTIVO"
+                    text = itemView.context.getString(R.string.status_active)
                     background = ContextCompat.getDrawable(context, R.drawable.rounded_tag_green)
-                    // Podrías necesitar configurar el color de texto si no está en el XML
-                    // textColor = ContextCompat.getColor(context, R.color.white_pure)
                 }
             } else {
-                // Estado INACTIVO: Fondo gris o rojo (Asumiendo un color gris para inactivo)
                 binding.tvEmployeeStatus.apply {
-                    text = itemView.context.getString(R.string.status_inactive) // Ej: "INACTIVO"
-                    // Necesitas definir un drawable/color para inactivo, por ejemplo rounded_tag_grey
+                    text = itemView.context.getString(R.string.status_inactive)
                     background = ContextCompat.getDrawable(context, R.drawable.rounded_tag_grey)
                 }
             }
+
+            // Manejo de la selección visual por Foreground
             if (selectedPosition == position) {
-                // Color cuando está seleccionado (puedes usar un azul muy claro o el color primario con alpha)
                 binding.root.foreground =
                     ContextCompat.getColor(itemView.context, R.color.selected_item_blue)
                         .toDrawable()
             } else {
-                // Color normal (transparente o blanco)
                 binding.root.foreground = null
             }
 
-            // 3. Manejar el Clic en el Ítem
+            // Gestores de Clics nativos
             binding.root.setOnClickListener {
                 onClickListener(empleado)
             }
-            binding.root.setOnLongClickListener {view->
-                val imm = view.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            binding.root.setOnLongClickListener { view ->
+                val imm =
+                    view.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                 imm.hideSoftInputFromWindow(view.windowToken, 0)
-                onLongClickListener(empleado,position)
-                true // Retornamos true para indicar que consumimos el evento
+                onLongClickListener(empleado, position)
+                true
             }
         }
     }
@@ -102,13 +115,12 @@ class EmpleadosAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(empleadosDisplayedList[position],position)
+        holder.bind(empleadosDisplayedList[position], position)
     }
 
     override fun getItemCount(): Int {
         return empleadosDisplayedList.size
     }
-
 
     override fun getFilter(): Filter = empleadosFilter
 
@@ -116,7 +128,7 @@ class EmpleadosAdapter(
 
         // 1. Ejecuta el filtrado en un hilo secundario
         override fun performFiltering(constraint: CharSequence?): FilterResults {
-            val charSearch = constraint.toString().toLowerCase()
+            val charSearch = constraint.toString().toLowerCase().trim()
 
             val filteredList = if (charSearch.isEmpty()) {
                 // Si el término de búsqueda está vacío, mostrar la lista completa
@@ -126,7 +138,8 @@ class EmpleadosAdapter(
                 empleadosFullList.filter { empleado ->
                     // Búsqueda por Nombre Completo o Nombre de Usuario
                     empleado.nombre.toLowerCase().contains(charSearch) ||
-                            empleado.usuario.toLowerCase().contains(charSearch)
+                            empleado.usuario.toLowerCase().contains(charSearch) ||
+                            empleado.nombreRol.toLowerCase().contains(charSearch)
                 }
             }
 

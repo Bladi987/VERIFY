@@ -94,7 +94,7 @@ class CashViewModel(
     private val _closeReport = MutableLiveData<Map<String, Any>?>()
     val closeReport: LiveData<Map<String, Any>?> get() = _closeReport
     val userId: Int = sessionManager.getUserId()
-    val userRol: String = sessionManager.getUserRole()
+    val userRol: String = sessionManager.getUserRolesForDisplay()
     val userName: String = sessionManager.getUserName()
     private val _activeSessionId = MutableLiveData<Int>(sessionManager.getActiveCashSessionId())
     val activeSessionId: LiveData<Int> get() = _activeSessionId
@@ -248,9 +248,9 @@ class CashViewModel(
         _closeReport.value = null
     }
 
-    fun isAuditorMode(): Boolean = userRol == "ADMIN"
+    fun isAuditorMode(): Boolean = sessionManager.hasRole("ADMIN")
 
-    fun needsSupervisorToOpen(): Boolean = userRol == "ALMACEN"
+    fun needsSupervisorToOpen(): Boolean = sessionManager.hasRole("ALMACEN")
 
     override fun onCleared() {
         super.onCleared()

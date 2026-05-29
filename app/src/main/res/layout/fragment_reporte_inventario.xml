@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
     android:background="#F8F9FA">
 
     <LinearLayout
@@ -148,7 +149,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:nestedScrollingEnabled="false"
-                android:padding="8dp" />
+                android:padding="8dp"
+                tools:listitem="@layout/item_producto_critico" />
         </com.google.android.material.card.MaterialCardView>
 
         <TextView
@@ -174,7 +176,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:nestedScrollingEnabled="false"
-                android:padding="8dp" />
+                android:padding="8dp"
+                tools:listitem="@layout/item_producto_ranking" />
         </com.google.android.material.card.MaterialCardView>
 
         <View

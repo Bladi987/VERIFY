@@ -10,21 +10,24 @@ import android.view.animation.AnimationUtils
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.kasolution.verify.R
-import com.kasolution.verify.UI.Clients.fragment.ClientFormDialogFragment
 import com.kasolution.verify.UI.Employees.adapter.EmpleadosAdapter
 import com.kasolution.verify.UI.Employees.fragment.EmpleadosFormDialogFragment
+import com.kasolution.verify.UI.Employees.fragment.PermisosEspecialesDialogFragment
 import com.kasolution.verify.domain.employees.model.Employee
 import com.kasolution.verify.UI.Employees.viewModel.EmpleadosViewModel
+import com.kasolution.verify.UI.Inventory.fragment.ProductFormDialogFragment
 import com.kasolution.verify.core.AppProvider
 import com.kasolution.verify.core.utils.BottomSheetHelper
 import com.kasolution.verify.core.utils.DialogHelper
 import com.kasolution.verify.core.utils.ProgressHelper
 import com.kasolution.verify.core.utils.ToastHelper
 import com.kasolution.verify.databinding.ActivityEmpleadosBinding
+import com.kasolution.verify.databinding.DialogSelectorRolesCardBinding
+import com.kasolution.verify.domain.Inventory.model.Product
 
 class EmployeesActivity : AppCompatActivity() {
     private val TAG = "EmpleadosActivity"
@@ -120,6 +123,10 @@ class EmployeesActivity : AppCompatActivity() {
                         viewModel.deleteEmpleado(empleado.id)
                     })
             },
+            onPermissions = {
+                val permisosDialog = PermisosEspecialesDialogFragment.newInstance(empleado.id, empleado.nombre)
+                permisosDialog.show(supportFragmentManager, "PermisosEspecialesTag")
+            },
             onDismiss = {
                 // Limpieza visual cuando el menú se va
                 selectedEmpleado = null
@@ -127,6 +134,7 @@ class EmployeesActivity : AppCompatActivity() {
             }
         )
     }
+
     private fun setupObservers() {
         viewModel.empleadosList.observe(this) { lista ->
             // El Observer solo entrega la data.

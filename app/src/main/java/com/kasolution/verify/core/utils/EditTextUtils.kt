@@ -1,7 +1,9 @@
 package com.kasolution.verify.core.utils
 
 import android.text.InputFilter
+import androidx.core.widget.doAfterTextChanged
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import java.util.Locale
 
 /**
@@ -37,5 +39,14 @@ fun TextInputEditText.setupCurrencyFormatting() {
         } else {
             this.selectAll()
         }
+    }
+}
+fun TextInputLayout.validate(condition: Boolean, message: String): Boolean {
+    this.error = if (condition) message else null
+    return !condition
+}
+fun TextInputLayout.clearErrorOnType() {
+    this.editText?.doAfterTextChanged {
+        if (this.error != null) this.error = null
     }
 }

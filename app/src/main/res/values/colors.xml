@@ -31,6 +31,11 @@
     <color name="background_light">#F8F9FA</color>
     <color name="text_secondary">#777777</color>
 
+    <color name="color_efectivo">#4CAF50</color>
+    <color name="color_yape">#8E24AA</color>
+    <color name="color_plin">#00897B</color>
+    <color name="color_tarjeta">#1976D2</color>
+    <color name="color_otros">#757575</color>
 
 
     <color name="background_card_success">#E8F5E9</color>

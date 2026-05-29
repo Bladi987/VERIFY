@@ -4,7 +4,7 @@ import com.kasolution.verify.domain.employees.model.Employee
 import com.kasolution.verify.data.repository.EmpleadoRepository
 
 class UpdateEmpleadoUseCase(val repository: EmpleadoRepository) {
-    operator fun invoke(empleado: Employee, pass: String?, requestId: String) {
-        repository.updateEmpleado(empleado, pass,requestId)
+    operator fun invoke(empleado: Employee, pass: String?, pin: String?, requestId: String) {
+        repository.updateEmpleado(empleado, pass, pin, requestId)
     }
 }

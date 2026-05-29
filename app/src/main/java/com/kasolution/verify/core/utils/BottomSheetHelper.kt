@@ -64,9 +64,9 @@ object BottomSheetHelper {
         name: String,
         onEdit: () -> Unit,
         onDelete: () -> Unit,
+        onPermissions: (() -> Unit)? = null,
         onDismiss: (() -> Unit)? = null
     ) {
-        // SEGURIDAD: Limpieza preventiva si quedó algo colgado
         forceCleanup(activity)
 
         isClosing = false
@@ -87,6 +87,40 @@ object BottomSheetHelper {
 
         val behavior = createBaseBottomSheet(rootView, binding, onDismiss)
         currentBehavior = behavior
+
+        if (onPermissions != null) {
+            val context = activity
+            val btnPermissions = android.widget.Button(context).apply {
+                text = "Permisos Especiales"
+                // Copiamos exactamente los mismos estilos de tus botones nativos del XML
+                background = binding.btnEditOption.background
+                setTextColor(binding.btnEditOption.textColors)
+                textSize = 16f
+                transformationMethod = binding.btnEditOption.transformationMethod
+
+                // Agregamos márgenes inferiores para separarlo estéticamente del botón de abajo
+                layoutParams = FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    val marginPx = (8 * context.resources.displayMetrics.density).toInt() // 8dp de separación
+                    setMargins(0, 0, 0, marginPx)
+                }
+            }
+
+            // Buscamos el contenedor vertical y agregamos el botón justo ARRIBA del botón Editar
+            val container = binding.btnEditOption.parent as? ViewGroup
+            container?.let {
+                val index = it.indexOfChild(binding.btnEditOption)
+                it.addView(btnPermissions, index)
+            }
+
+            // Asignamos el clic exclusivo
+            btnPermissions.setOnClickListener {
+                onPermissions()
+                hideWithAnimation(binding, behavior, rootView, onDismiss)
+            }
+        }
 
         binding.btnEditOption.setOnClickListener {
             onEdit()

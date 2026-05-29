@@ -7,9 +7,11 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import com.github.mikephil.charting.components.Legend
 import com.github.mikephil.charting.data.*
 import com.kasolution.verify.UI.Reports.viewModel.ReportesViewModel
 import com.kasolution.verify.databinding.FragmentReporteFinanzasBinding
+import com.kasolution.verify.domain.reports.model.ReporteMetodoPago
 import com.kasolution.verify.domain.reports.model.ReporteVenta
 import kotlin.getValue
 
@@ -81,21 +83,70 @@ class ReporteFinanzasFragment : Fragment() {
         binding.combinedChart.invalidate()
     }
 
-    private fun updatePieChart(lista: List<com.kasolution.verify.domain.reports.model.ReporteMetodoPago>) {
+    private fun updatePieChart(lista: List<ReporteMetodoPago>) {
         val entries = lista.map {
-            PieEntry(it.total.toFloat(), it.metodo)
+            PieEntry(it.total.toFloat(), it.metodo.uppercase())
+        }
+
+        val coloresPersonalizados = lista.map {
+            when (it.metodo.uppercase()) {
+                "EFECTIVO" -> Color.parseColor("#4CAF50")
+                "YAPE"     -> Color.parseColor("#9822A7")
+                "PLIN"     -> Color.parseColor("#0DD5D3")
+                "TARJETA"  -> Color.parseColor("#1976D2")
+                else       -> Color.parseColor("#757575")
+            }
         }
 
         val dataSet = PieDataSet(entries, "").apply {
-            colors = listOf(Color.CYAN, Color.MAGENTA, Color.YELLOW, Color.LTGRAY)
+            colors = coloresPersonalizados
+            sliceSpace = 3f
+
+            // Mantenemos los valores fuera para que no ensucien el gráfico
+            yValuePosition = PieDataSet.ValuePosition.OUTSIDE_SLICE
+            valueLinePart1OffsetPercentage = 80f
+            valueLinePart1Length = 0.4f
+            valueLinePart2Length = 0.2f
             valueTextColor = Color.BLACK
             valueTextSize = 12f
         }
 
-        binding.pieChartPagos.data = PieData(dataSet)
-        binding.pieChartPagos.description.isEnabled = false
-        binding.pieChartPagos.centerText = "Métodos"
-        binding.pieChartPagos.invalidate()
+        binding.pieChartPagos.apply {
+            data = PieData(dataSet).apply {
+                setValueFormatter(object : com.github.mikephil.charting.formatter.ValueFormatter() {
+                    override fun getFormattedValue(value: Float): String = "S/ %.2f".format(value)
+                })
+            }
+
+            // --- CONFIGURACIÓN PARA GRÁFICO GRANDE ---
+            description.isEnabled = false
+            centerText = "Ingresos"
+            setHoleRadius(50f)
+
+            // Eliminamos offsets laterales excesivos para que el círculo crezca
+            setExtraOffsets(20f, 0f, 20f, 0f)
+
+            // --- LEYENDA EN LA PARTE INFERIOR ---
+            legend.apply {
+                isEnabled = true
+                verticalAlignment = Legend.LegendVerticalAlignment.BOTTOM // Abajo
+                horizontalAlignment = Legend.LegendHorizontalAlignment.CENTER // Centrado
+                orientation = Legend.LegendOrientation.HORIZONTAL // Horizontal para que no ocupe mucho alto
+                setDrawInside(false)
+                isWordWrapEnabled = true // Si hay muchos métodos, salta de línea
+
+                xEntrySpace = 15f // Espacio entre items de la leyenda
+                yEntrySpace = 5f
+                textSize = 12f
+                form = Legend.LegendForm.CIRCLE // Formato de la leyenda
+            }
+
+            // Esto es clave: permite que el gráfico use el espacio que antes ocupaba la leyenda lateral
+            minOffset = 0f
+
+            animateY(800)
+            invalidate()
+        }
     }
 
     override fun onDestroyView() {

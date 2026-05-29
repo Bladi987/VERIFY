@@ -20,7 +20,13 @@ class CategoriesViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(CategoriesViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return CategoriesViewModel(getCategoriesUseCase, saveCategoryUseCase, updateCategoryUseCase, deleteCategoryUseCase, socketManager) as T
+            return CategoriesViewModel(
+                getCategoriesUseCase,
+                saveCategoryUseCase,
+                updateCategoryUseCase,
+                deleteCategoryUseCase,
+                socketManager
+            ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

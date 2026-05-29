@@ -2,6 +2,7 @@ package com.kasolution.verify.core
 
 import android.content.Context
 import com.kasolution.verify.UI.Access.viewModel.LoginViewModelFactory
+import com.kasolution.verify.UI.Branch.viewModel.SucursalViewModelFactory
 import com.kasolution.verify.UI.Cash.viewModel.CashViewModelFactory
 import com.kasolution.verify.UI.Category.viewModel.CategoriesViewModelFactory
 import com.kasolution.verify.UI.Clients.viewModel.ClientesViewModelFactory
@@ -11,6 +12,7 @@ import com.kasolution.verify.UI.Employees.viewModel.EmpleadosViewModelFactory
 import com.kasolution.verify.UI.Inventory.viewModel.InventoryViewModelFactory
 import com.kasolution.verify.UI.Purchase.viewModel.PurchaseViewModelFactory
 import com.kasolution.verify.UI.Reports.viewModel.ReportesViewModelFactory
+import com.kasolution.verify.UI.Role.viewModel.RoleViewModelFactory
 import com.kasolution.verify.UI.Sales.viewModel.SalesViewModelFactory
 import com.kasolution.verify.UI.Suppliers.viewModel.SuppliersViewModelFactory
 import com.kasolution.verify.data.local.SessionManager
@@ -24,12 +26,18 @@ import com.kasolution.verify.data.repository.EmpleadoRepository
 import com.kasolution.verify.data.repository.InventoryRepository
 import com.kasolution.verify.data.repository.PurchaseRepository
 import com.kasolution.verify.data.repository.ReporteRepository
+import com.kasolution.verify.data.repository.RolRepository
 import com.kasolution.verify.data.repository.SalesRepository
+import com.kasolution.verify.data.repository.SucursalRepository
 import com.kasolution.verify.data.repository.SuppliersRepository
 import com.kasolution.verify.domain.purchase.DeletePurchaseUseCase
 import com.kasolution.verify.domain.purchase.GetPurchaseDetailUseCase
 import com.kasolution.verify.domain.purchase.GetPurchaseHistoryUseCase
 import com.kasolution.verify.domain.purchase.SavePurchaseUseCase
+import com.kasolution.verify.domain.usecases.Branch.DeleteBranchUseCase
+import com.kasolution.verify.domain.usecases.Branch.GetBranchesUseCase
+import com.kasolution.verify.domain.usecases.Branch.SaveBranchUseCase
+import com.kasolution.verify.domain.usecases.Branch.UpdateBranchUseCase
 import com.kasolution.verify.domain.usecases.Cash.AddCashMovementUseCase
 import com.kasolution.verify.domain.usecases.Cash.CloseCashUseCase
 import com.kasolution.verify.domain.usecases.Cash.GetCashHistoryUseCase
@@ -51,6 +59,10 @@ import com.kasolution.verify.domain.usecases.Inventory.DeleteProductUseCase
 import com.kasolution.verify.domain.usecases.Inventory.GetProductsUseCase
 import com.kasolution.verify.domain.usecases.Inventory.SaveProductUseCase
 import com.kasolution.verify.domain.usecases.Inventory.UpdateProductUseCase
+import com.kasolution.verify.domain.usecases.Roles.DeleteRoleUseCase
+import com.kasolution.verify.domain.usecases.Roles.GetRoleUseCase
+import com.kasolution.verify.domain.usecases.Roles.SaveRoleUseCase
+import com.kasolution.verify.domain.usecases.Roles.UpdateRoleUseCase
 import com.kasolution.verify.domain.usecases.Sales.DeleteSaleUseCase
 import com.kasolution.verify.domain.usecases.Sales.GetSaleDetailUseCase
 import com.kasolution.verify.domain.usecases.Sales.GetSalesHistoryUseCase
@@ -84,6 +96,8 @@ object AppProvider {
     private var cashRepositoryInstance: CashRepository? = null
     private var sessionManagerInstance: SessionManager? = null
     private var reporteRepositoryInstance: ReporteRepository? = null
+    private var sucursalRepositoryInstance: SucursalRepository? = null
+    private var roleRepositoryInstance: RolRepository? = null
 
     /**
      * Inicializa la conexión usando la IP guardada.
@@ -135,12 +149,16 @@ object AppProvider {
 
     fun provideEmpleadosViewModelFactory(): EmpleadosViewModelFactory {
         val repo = getEmpleadoRepository()
+        val repoSucursal = getSucursalRepository()
+        val repoRole = getRoleRepository()
 
         return EmpleadosViewModelFactory(
             GetEmpleadosUseCase(repo),
             SaveEmpleadoUseCase(repo),
             UpdateEmpleadoUseCase(repo),
             DeleteEmpleadoUseCase(repo),
+            GetBranchesUseCase(repoSucursal),
+            GetRoleUseCase(repoRole),
             socketManager
         )
     }
@@ -351,7 +369,46 @@ object AppProvider {
             socketManager = socketManager
         )
     }
+    //sucursal
+    private fun getSucursalRepository(): SucursalRepository {
+        return sucursalRepositoryInstance ?: synchronized(this) {
+            sucursalRepositoryInstance ?: SucursalRepository(socketManager).also {
+                sucursalRepositoryInstance = it
+            }
+        }
+    }
 
+    fun provideSucursalViewModelFactory(): SucursalViewModelFactory {
+        val repo = getSucursalRepository()
+
+        return SucursalViewModelFactory(
+            GetBranchesUseCase(repo),
+            SaveBranchUseCase(repo),
+            UpdateBranchUseCase(repo),
+            DeleteBranchUseCase(repo),
+            socketManager
+        )
+    }
+    //roles
+    private fun getRoleRepository(): RolRepository {
+        return roleRepositoryInstance ?: synchronized(this) {
+            roleRepositoryInstance ?: RolRepository(socketManager).also {
+                roleRepositoryInstance = it
+            }
+        }
+    }
+
+    fun provideRoleViewModelFactory(): RoleViewModelFactory {
+        val repo = getRoleRepository()
+
+        return RoleViewModelFactory(
+            GetRoleUseCase(repo),
+            SaveRoleUseCase(repo),
+            UpdateRoleUseCase(repo),
+            DeleteRoleUseCase(repo),
+            socketManager
+        )
+    }
 
     // --- DASHBOARD ---
 
@@ -362,7 +419,9 @@ object AppProvider {
         val clearables = listOfNotNull(
             authRepositoryInstance,
             empleadoRepositoryInstance,
-            clientsRepositoryInstance
+            clientsRepositoryInstance,
+            sucursalRepositoryInstance,
+            roleRepositoryInstance
         )
 
         val logoutUseCase = LogoutUseCase(
@@ -391,6 +450,8 @@ object AppProvider {
         purchaseRepositoryInstance?.clear() // Limpiar Compras
         cashRepositoryInstance?.clear()
         reporteRepositoryInstance?.clear()
+        sucursalRepositoryInstance?.clear()
+        roleRepositoryInstance?.clear()
 
         authRepositoryInstance = null
         empleadoRepositoryInstance = null
@@ -402,5 +463,7 @@ object AppProvider {
         purchaseRepositoryInstance = null
         cashRepositoryInstance = null
         reporteRepositoryInstance = null
+        sucursalRepositoryInstance = null
+        roleRepositoryInstance = null
     }
 }

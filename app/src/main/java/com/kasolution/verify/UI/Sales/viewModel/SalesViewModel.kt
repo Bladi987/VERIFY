@@ -34,7 +34,7 @@ class SalesViewModel(
     private var currentRequestId: String? = null
     val userId: Int = sesionManager.getUserId()
     val userName: String = sesionManager.getUserName()
-    val userRole: String = sesionManager.getUserRole()
+    val userRole: String = sesionManager.getUserRolesForDisplay()
     private val activeCashSessionId: Int get() = sesionManager.getActiveCashSessionId()
     private val gson = Gson()
 

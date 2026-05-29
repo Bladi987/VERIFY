@@ -9,7 +9,7 @@ class LoginViewModel(private val repository: AuthRepository) : ViewModel() {
 
     // Ahora este LiveData emitirá Success(User) o Error(String)
     // El repositorio se encargará de transformar el DTO a este formato
-    val loginResult = repository.loginResult
+    val loginResult = repository.authResult
 
     private val _isLoading = MutableLiveData<Boolean>(false)
     val isLoading: LiveData<Boolean> get() = _isLoading

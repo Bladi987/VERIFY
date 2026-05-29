@@ -3,7 +3,6 @@ package com.kasolution.verify.UI.Access
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
@@ -15,7 +14,7 @@ import com.kasolution.verify.core.AppProvider
 import com.kasolution.verify.core.utils.DialogHelper
 import com.kasolution.verify.core.utils.ToastHelper
 import com.kasolution.verify.databinding.ActivityLoginBinding
-import com.kasolution.verify.domain.access.model.LoginResult
+import com.kasolution.verify.domain.auth.model.AuthResult
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
@@ -64,13 +63,13 @@ class LoginActivity : AppCompatActivity() {
             binding.btnLogin.setLoading(false)
 
             when (result) {
-                is LoginResult.Success -> {
+                is AuthResult.Success -> {
                     // El login fue exitoso, ya tenemos al objeto User dentro de result.user
-                    Log.d("LoginActivity", "Login exitoso: ${result.user.nombre}")
+                    Log.d("LoginActivity", "Login exitoso: ${result.userSession.nombre}")
                     irADashboard()
                     viewModel.resetState()
                 }
-                is LoginResult.Error -> {
+                is AuthResult.Error -> {
                     // Manejamos los errores según el mensaje o tipo
                     Log.e("LoginActivity", "Error: ${result.message}")
 

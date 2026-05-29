@@ -1,6 +1,7 @@
 package com.kasolution.verify.UI.Reports.fragment
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,7 +15,7 @@ import com.kasolution.verify.databinding.FragmentReporteInventarioBinding
 import kotlin.getValue
 
 class ReporteInventarioFragment : Fragment() {
-
+private val TAG = "ReporteInventarioFragment"
     private var _binding: FragmentReporteInventarioBinding? = null
     private val binding get() = _binding!!
     private val viewModel: ReportesViewModel by activityViewModels()
@@ -65,8 +66,13 @@ class ReporteInventarioFragment : Fragment() {
             }
         }
         viewModel.topProductos.observe(viewLifecycleOwner) { lista ->
-            val adapterRanking = RankingAdapter(lista)
-            binding.rvRankingProductos.adapter = adapterRanking
+            lista?.let {
+                if (binding.rvRankingProductos.layoutManager == null) {
+                    binding.rvRankingProductos.layoutManager = LinearLayoutManager(requireContext())
+                }
+                val adapterRanking = RankingAdapter(it)
+                binding.rvRankingProductos.adapter = adapterRanking
+            }
         }
 
     }

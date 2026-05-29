@@ -10,7 +10,7 @@ class DashboardViewModel(private val sessionManager: SessionManager, private val
 ) : ViewModel() {
 
     val userName: String = sessionManager.getUserName()
-    val userRole: String = sessionManager.getUserRole()
+    val userRole = sessionManager.getUserRolesForDisplay()
     val idCaja: Int get() = sessionManager.getActiveCashSessionId()
 
 
