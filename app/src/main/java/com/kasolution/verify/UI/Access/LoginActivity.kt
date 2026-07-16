@@ -65,7 +65,7 @@ class LoginActivity : AppCompatActivity() {
             when (result) {
                 is AuthResult.Success -> {
                     // El login fue exitoso, ya tenemos al objeto User dentro de result.user
-                    Log.d("LoginActivity", "Login exitoso: ${result.userSession.nombre}")
+                    Log.d("LoginActivity", "Login exitoso: ${result.AuthSession.nombre}")
                     irADashboard()
                     viewModel.resetState()
                 }

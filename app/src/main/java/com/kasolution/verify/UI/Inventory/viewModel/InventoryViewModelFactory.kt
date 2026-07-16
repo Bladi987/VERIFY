@@ -2,6 +2,7 @@ package com.kasolution.verify.UI.Inventory.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.kasolution.verify.data.local.SessionManager
 import com.kasolution.verify.data.network.SocketManager
 import com.kasolution.verify.domain.usecases.Categories.GetCategoriesUseCase
 import com.kasolution.verify.domain.usecases.Categories.SaveCategoryUseCase
@@ -14,6 +15,7 @@ import com.kasolution.verify.domain.usecases.Suppliers.GetSuppliersUseCase
 
 
 class InventoryViewModelFactory(
+    private val sesionManager: SessionManager,
     private val getProductsUseCase: GetProductsUseCase,
     private val saveProductUseCase: SaveProductUseCase,
     private val updateProductUseCase: UpdateProductUseCase,
@@ -28,6 +30,7 @@ class InventoryViewModelFactory(
         if (modelClass.isAssignableFrom(InventoryViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return InventoryViewModel(
+                sesionManager,
                 getProductsUseCase,
                 saveProductUseCase,
                 updateProductUseCase,

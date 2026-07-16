@@ -11,6 +11,7 @@ class DashboardViewModel(private val sessionManager: SessionManager, private val
 
     val userName: String = sessionManager.getUserName()
     val userRole = sessionManager.getUserRolesForDisplay()
+    val sucursal = sessionManager.getSucursalNombre()
     val idCaja: Int get() = sessionManager.getActiveCashSessionId()
 
 

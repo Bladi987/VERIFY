@@ -38,7 +38,7 @@ class PurchaseActivity : AppCompatActivity() {
     private val TAG = "PurchaseActivity"
     private lateinit var binding: ActivityPurchaseBinding
     private lateinit var adapterCompra: PurchaseAdapter
-
+    private var idSucursal=0
     private var supplierSeleccionado: Supplier? = null
     private val viewModel: PurchaseViewModel by viewModels {
         AppProvider.providePurchaseViewModelFactory(this)
@@ -47,11 +47,15 @@ class PurchaseActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityPurchaseBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        setupPreferences()
         setupScannerReceiver()
         setupBackPressedHandling()
         initialRecycler()
         setupObservers()
         setupListeners()
+    }
+    private fun setupPreferences() {
+        idSucursal=viewModel.idSucursal
     }
     private fun setupListeners() {
         // Botón para finalizar la compra (Nota de Ingreso)
@@ -89,9 +93,8 @@ class PurchaseActivity : AppCompatActivity() {
         binding.btnScannerCompra.setOnClickListener {
             val intent = Intent(this, ScannerActivity::class.java).apply {
                 putExtra("SCAN_MODE", "PURCHASE")
-                // Activamos el modo multi-escaneo para no salir de la cámara tras cada producto
+                putExtra("ID_SUCURSAL", idSucursal)
                 putExtra("MULTI_SCAN", true)
-                // Pasamos datos actuales para que el escáner muestre el progreso visual
                 putExtra("INITIAL_TOTAL", viewModel.totalCompra.value ?: 0.0)
                 putExtra("INITIAL_COUNT", viewModel.cartList.value?.sumOf { it.cantidad } ?: 0)
             }

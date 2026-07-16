@@ -6,9 +6,13 @@ import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
+import com.kasolution.verify.data.local.SessionManager
 import com.kasolution.verify.data.network.SocketManager
 
-class SalesRepository(private val socketManager: SocketManager) {
+class SalesRepository(
+    private val socketManager: SocketManager,
+    private val sessionManager: SessionManager
+) {
 
     private val TAG = "SalesRepository"
     private val gson = Gson()
@@ -42,9 +46,10 @@ class SalesRepository(private val socketManager: SocketManager) {
                     jsonObject.get("status").asString == "success"
                 } else false
 
-                val requestId = if (jsonObject.has("request_id") && !jsonObject.get("request_id").isJsonNull) {
-                    jsonObject.get("request_id").asString
-                } else null
+                val requestId =
+                    if (jsonObject.has("request_id") && !jsonObject.get("request_id").isJsonNull) {
+                        jsonObject.get("request_id").asString
+                    } else null
 
                 when (action) {
                     "SALE_SAVE", "SALE_GET_DETAIL" -> {
@@ -58,7 +63,8 @@ class SalesRepository(private val socketManager: SocketManager) {
                                 onOperationResult?.invoke(action, status, requestId)
                             }
                         } else {
-                            val msg = if(jsonObject.has("message")) jsonObject.get("message").asString else null
+                            val msg =
+                                if (jsonObject.has("message")) jsonObject.get("message").asString else null
                             Handler(Looper.getMainLooper()).post {
                                 onOperationResult?.invoke(action, status, msg ?: requestId)
                             }
@@ -89,7 +95,7 @@ class SalesRepository(private val socketManager: SocketManager) {
     }
 
     fun saveSale(
-        idSesion: Int,          // NUEVO: Obligatorio para afectar caja física
+        idSesion: Int,
         idCliente: Int?,
         idEmpleado: Int,
         total: Double,
@@ -99,7 +105,7 @@ class SalesRepository(private val socketManager: SocketManager) {
         requestId: String
     ) {
         val params = mutableMapOf<String, Any>(
-            "id_sesion" to idSesion, // SE AGREGA AL MAPA
+            "id_sesion" to idSesion,
             "id_cliente" to (idCliente ?: 0),
             "id_empleado" to idEmpleado,
             "total" to total,
@@ -113,7 +119,11 @@ class SalesRepository(private val socketManager: SocketManager) {
     }
 
     fun getSalesHistory() {
-        socketManager.sendAction("SALE_GET_ALL")
+        val idSucursal = sessionManager.getSession()?.idSucursal ?: -1
+        val params = mapOf(
+            "id_sucursal" to idSucursal
+        )
+        socketManager.sendAction("SALE_GET_ALL", params)
     }
 
     fun getSaleDetail(idVenta: Int) {
@@ -121,8 +131,6 @@ class SalesRepository(private val socketManager: SocketManager) {
     }
 
     fun deleteSale(idVenta: Int, requestId: String) {
-        // Al anular, el trigger en el Backend ya sabe qué sesión afectar
-        // porque la venta ya tiene el id_sesion grabado.
         socketManager.sendAction(
             "SALE_DELETE",
             mapOf("id_venta" to idVenta),

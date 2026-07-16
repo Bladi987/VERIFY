@@ -17,12 +17,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
-import com.kasolution.verify.UI.Components.Scanner.viewModel.ScannerViewModelFactory
 import com.kasolution.verify.core.AppProvider
 import com.kasolution.verify.core.utils.DialogHelper
-import com.kasolution.verify.core.utils.ToastHelper
-import com.kasolution.verify.data.network.SocketManager
-import com.kasolution.verify.data.repository.InventoryRepository
 import com.kasolution.verify.databinding.ActivityScannerBinding
 
 class ScannerActivity : AppCompatActivity() {
@@ -35,7 +31,7 @@ class ScannerActivity : AppCompatActivity() {
     private var barcodeAnalyzer: BarcodeAnalyzer? = null
     private var currentCode: String = ""
     private var montoTotal: Double = 0.0
-
+    private var idSucursalActiva: Int = 0
     private val viewModel: ScannerViewModel by viewModels {
         AppProvider.provideScannerViewModelFactory()
     }
@@ -45,6 +41,7 @@ class ScannerActivity : AppCompatActivity() {
         binding = ActivityScannerBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        idSucursalActiva = intent.getIntExtra("ID_SUCURSAL", 0)
         isMultiScan = intent.getBooleanExtra("MULTI_SCAN", false)
         scanMode = intent.getStringExtra("SCAN_MODE") ?: "SALE"
         binding.tvBadgeContador.visibility = if (isMultiScan) View.VISIBLE else View.GONE
@@ -61,8 +58,6 @@ class ScannerActivity : AppCompatActivity() {
         }
 
         toneGenerator = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100)
-
-
         checkPermissionsAndStart()
     }
 
@@ -71,6 +66,7 @@ class ScannerActivity : AppCompatActivity() {
             // Este observador SOLO se activará en Modo Ventas (MultiScan)
             if (isMultiScan) {
                 val existe = producto != null
+                Log.i("Scanner", "Producto encontrado: $existe")
 
                 // Feedback Visual y Sonoro según si existe el producto
                 binding.scannerOverlay.flashResultColor(existe)
@@ -81,9 +77,9 @@ class ScannerActivity : AppCompatActivity() {
                 if (existe) {
                     totalEscaneados++
                     val precioAMostrar = if (scanMode == "PURCHASE") {
-                        producto!!.precioCompra
+                        producto.precioCompra
                     } else {
-                        producto!!.precioVenta
+                        producto.precioVenta
                     }
                     montoTotal += precioAMostrar
                     binding.tvBadgeContador.text = totalEscaneados.toString()
@@ -92,7 +88,7 @@ class ScannerActivity : AppCompatActivity() {
                     binding.tvTotalAcumulado.text = totalFormateado
 
                     showProductFeedback(
-                        producto!!.nombre,
+                        producto.nombre,
                         "S/ ${String.format("%.2f", precioAMostrar)}"
                     )
                     binding.cardTotal.animate().scaleX(1.1f).scaleY(1.1f).setDuration(100)
@@ -140,7 +136,7 @@ class ScannerActivity : AppCompatActivity() {
                 .build()
 
             barcodeAnalyzer = BarcodeAnalyzer(binding.scannerOverlay, binding.previewView) { code ->
-                runOnUiThread { procesarCodigo(code) }
+                runOnUiThread { procesarCodigo(code,scanMode) }
             }
 
             imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(this), barcodeAnalyzer!!)
@@ -211,12 +207,13 @@ class ScannerActivity : AppCompatActivity() {
                         setPackage(packageName)
                     }
                     sendBroadcast(intentReset)
+                    viewModel.resetScanner()
                 })
 
         }
     }
 
-    private fun procesarCodigo(code: String) {
+    private fun procesarCodigo(code: String,modo:String) {
         currentCode = code
         if (isMultiScan) {
             // Comunicación con SalesActivity
@@ -224,8 +221,7 @@ class ScannerActivity : AppCompatActivity() {
                 putExtra("SCAN_RESULT_CODE", code)
                 setPackage(packageName)
             })
-
-            viewModel.findProductByCode(code)
+            viewModel.findProductByCode(code,idSucursalActiva,modo)
 
             // Reanudar escaneo tras pausa para feedback
             binding.root.postDelayed({ barcodeAnalyzer?.resumeScanning() }, 1500)

@@ -1,9 +1,9 @@
 package com.kasolution.verify.data.mapper
 
 import com.kasolution.verify.data.remote.dto.AuthResponseDto
-import com.kasolution.verify.domain.auth.model.UserSession
 import com.kasolution.verify.domain.auth.model.AppModule
 import com.kasolution.verify.domain.auth.model.AuthResult
+import com.kasolution.verify.domain.auth.model.AuthSession
 
 fun AuthResponseDto.toDomain(): AuthResult {
     if (this.status != "success" || this.data == null) {
@@ -11,7 +11,7 @@ fun AuthResponseDto.toDomain(): AuthResult {
     }
 
     val dto = this.data
-    val userSession = UserSession(
+    val authSession = AuthSession(
         id = dto.id,
         nombre = dto.nombre ?: "Usuario",
         idSucursal = dto.idSucursal ?: 0,
@@ -30,5 +30,5 @@ fun AuthResponseDto.toDomain(): AuthResult {
             )
         }?.sortedBy { it.orden } ?: emptyList()
     )
-    return AuthResult.Success(userSession)
+    return AuthResult.Success(authSession)
 }

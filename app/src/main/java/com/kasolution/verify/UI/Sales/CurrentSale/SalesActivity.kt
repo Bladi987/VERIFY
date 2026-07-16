@@ -45,7 +45,7 @@ class SalesActivity : AppCompatActivity() {
 
     private var listaMaestra = listOf<Product>()
     private var listaClientes = listOf<Client>()
-    private var idTipoComprobanteSeleccionado = 1
+    private var idSucursal=0
 
     private val viewModel: SalesViewModel by viewModels {
         AppProvider.provideSalesViewModelFactory(this)
@@ -55,11 +55,20 @@ class SalesActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivitySalesBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        setupScannerReceiver()
-        setupBackPressedHandling()
-        initialRecycler()
-        setupObservers()
-        setupListeners()
+        if(viewModel.activeCashSessionId>0){
+            setupPreferences()
+            setupScannerReceiver()
+            setupBackPressedHandling()
+            initialRecycler()
+            setupObservers()
+            setupListeners()
+        }else{
+            finish()
+        }
+    }
+
+    private fun setupPreferences() {
+        idSucursal=viewModel.idSucursal
     }
 
     private fun setupListeners() {
@@ -84,6 +93,8 @@ class SalesActivity : AppCompatActivity() {
         binding.btnScannerVenta.setOnClickListener {
             val intent = Intent(this, ScannerActivity::class.java).apply {
                 putExtra("MULTI_SCAN", true)
+                putExtra("SCAN_MODE", "SALE")
+                putExtra("ID_SUCURSAL", idSucursal)
                 putExtra("INITIAL_TOTAL", viewModel.totalVenta.value ?: 0.0)
                 putExtra("INITIAL_COUNT", viewModel.cartList.value?.sumOf { it.cantidad } ?: 0)
             }
@@ -179,7 +190,6 @@ class SalesActivity : AppCompatActivity() {
             if (accion == "SALE_SAVE") {
                 viewModel.resetOperationStatus()
                 mostrarTicket()
-                //ToastHelper.showCustomToast(binding.root, "Venta realizada con éxito", true)
             }
         }
 

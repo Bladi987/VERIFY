@@ -44,30 +44,13 @@ class AuthRepository(
 
                 if (jsonObject.get("action")?.asString == "AUTH_LOGIN") {
                     val responseDto = gson.fromJson(text, AuthResponseDto::class.java)
-
-                    if (responseDto.status == "success") {
-                        val data = responseDto.data
-                        // Verificamos datos del DTO antes de guardarlos en sesión
-                        if (data != null) {
-                            sessionManager.saveSession(
-                                idEmpleado = data.id,
-                                nombre = data.nombre ?: "Usuario",
-                                rolSlug = data.rol?.slugRol ?: "INVITADO", // String único (ej: 'ADMIN', 'CAJERO')
-                                permisos = data.permisos ?: emptyList(),
-                                idSucursal = data.idSucursal?: -1,
-                                sucursalNombre = data.sucursalNombre ?: "Sede Principal"
-                            )
-
-                            // Guardar los módulos serializados en las SharedPreferences mediante tu SessionManager
-                            // para poder leerlos en la actividad principal y armar el menú lateral (Navigation Drawer)
-                            data.modulos?.let { listaModulos ->
-                                sessionManager.saveUserModules(gson.toJson(listaModulos))
-                            }
-                        }
+                    val domainResult = responseDto.toDomain()
+                    if (domainResult is AuthResult.Success) {
+                        sessionManager.saveSession(domainResult.AuthSession)
                     }
 
                     // Mapeo DTO -> Domain para la UI
-                    _authResult.postValue(responseDto.toDomain())
+                    _authResult.postValue(domainResult)
                     isAuthenticating = false
                 }
             } catch (e: Exception) {
@@ -92,7 +75,6 @@ class AuthRepository(
     }
 
     fun onSocketReconnected() {
-        // Al reconectar, simplemente refrescamos la suscripción
         registerObserver()
     }
 

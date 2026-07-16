@@ -5,13 +5,10 @@ import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.view.LayoutInflater
 import android.view.View
-import android.view.animation.AnimationUtils
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
@@ -25,8 +22,8 @@ import com.kasolution.verify.UI.Inventory.fragment.ProductFormDialogFragment
 import com.kasolution.verify.domain.Inventory.model.Product
 import com.kasolution.verify.UI.Inventory.viewModel.InventoryViewModel
 import com.kasolution.verify.core.AppProvider
-import com.kasolution.verify.core.utils.BottomSheetHelper
 import com.kasolution.verify.core.utils.DialogHelper
+import com.kasolution.verify.core.utils.NewBottonSheetHelper
 import com.kasolution.verify.core.utils.ProgressHelper
 import com.kasolution.verify.core.utils.ToastHelper
 import com.kasolution.verify.databinding.ActivityInventoryBinding
@@ -42,7 +39,7 @@ class InventoryActivity : AppCompatActivity() {
     private val TAG = "InventoryActivity"
 
     private val viewModel: InventoryViewModel by viewModels {
-        AppProvider.provideInventoryViewModelFactory()
+        AppProvider.provideInventoryViewModelFactory(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -96,9 +93,9 @@ class InventoryActivity : AppCompatActivity() {
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (BottomSheetHelper.isSheetVisible()) {
+                if (NewBottonSheetHelper.isSheetVisible()) {
                     // Si el menú está abierto, lo cerramos y NO salimos de la activity
-                    BottomSheetHelper.closeSheetDirectly()
+                    NewBottonSheetHelper.closeSheetDirectly()
                 } else {
                     // Si el menú NO está abierto, desactivamos este callback y dejamos que
                     // la activity se cierre normalmente con el siguiente "atrás"
@@ -198,7 +195,7 @@ class InventoryActivity : AppCompatActivity() {
         selectedProduct = product
         adapter.setSelectedItem(position)
 
-        BottomSheetHelper.showInventoryOptions(
+        NewBottonSheetHelper.showInventoryOptions(
             activity = this,
             cabeceraName = "Producto",
             name = product.nombre,
@@ -324,7 +321,7 @@ class InventoryActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        BottomSheetHelper.forceCleanup(this)
+        NewBottonSheetHelper.forceCleanup(this)
         super.onDestroy()
     }
 

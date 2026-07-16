@@ -6,14 +6,12 @@ import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
+import com.kasolution.verify.data.local.SessionManager
 import com.kasolution.verify.data.network.SocketManager
 
-class CashRepository(private val socketManager: SocketManager) {
-
+class CashRepository(private val socketManager: SocketManager, private val sessionManager: SessionManager) {
     private val TAG = "CashRepository"
     private val gson = Gson()
-
-    // --- CALLBACKS PARA LA UI ---
     var onOperationResult: ((String, Boolean, String?) -> Unit)? = null
     var onCashStatusReceived: ((Map<String, Any>?) -> Unit)? = null
     var onCashHistoryReceived: ((List<Map<String, Any>>) -> Unit)? = null
@@ -48,30 +46,24 @@ class CashRepository(private val socketManager: SocketManager) {
                                 val dummyData = mapOf("id_sesion" to idSesion.toDouble())
                                 onCashStatusReceived?.invoke(dummyData)
                             }
-                            // IMPORTANTE: Mantenemos "CASH_OPEN" como nombre de acción para la UI
                             onOperationResult?.invoke("CASH_OPEN", status, message ?: requestId)
                         }
                     }
 
                     "CASH_GET_STATUS" -> {
                         try {
-                            // 1. Extraer 'data' de forma segura (aquí es donde probablemente salta el JsonNull)
                             val dataElement = jsonObject.get("data")
                             val data = if (dataElement != null && !dataElement.isJsonNull) {
                                 val type = object : TypeToken<Map<String, Any>>() {}.type
                                 gson.fromJson<Map<String, Any>>(dataElement, type)
-                            } else {
-                                null
-                            }
+                            } else null
 
-                            // 2. Notificar al ViewModel en el hilo principal
                             Handler(Looper.getMainLooper()).post {
                                 onCashStatusReceived?.invoke(data)
                             }
 
                         } catch (e: Exception) {
                             Log.e(TAG, "Error procesando CASH_GET_STATUS: ${e.message}")
-                            // Aún en error, debemos avisar que terminó la carga
                             Handler(Looper.getMainLooper()).post {
                                 onCashStatusReceived?.invoke(null)
                             }
@@ -108,12 +100,6 @@ class CashRepository(private val socketManager: SocketManager) {
             }
         }
     }
-
-    // --- MÉTODOS DE ACCIÓN ---
-
-    /**
-     * Abre una nueva sesión de caja.
-     */
     fun authorizeAndOpenCash(
         idEmpleado: Int,
         montoApertura: Double,
@@ -121,33 +107,33 @@ class CashRepository(private val socketManager: SocketManager) {
         superPass: String,
         requestId: String
     ) {
+        val idSucursal = sessionManager.getSession()?.idSucursal ?: -1
         val params = mapOf(
             "id_empleado" to idEmpleado,
+            "id_sucursal" to idSucursal,
             "monto_apertura" to montoApertura,
             "supervisor_user" to superUser,
             "supervisor_pass" to superPass
         )
-        // Esta acción coincide con el 'case' que pusimos en el PHP
         socketManager.sendAction("CASH_OPEN_AUTHORIZED", params, requestId)
     }
     fun openCash(idEmpleado: Int, montoApertura: Double, requestId: String) {
+        val idSucursal = sessionManager.getSession()?.idSucursal ?: -1
         val params = mapOf(
             "id_empleado" to idEmpleado,
+            "id_sucursal" to idSucursal,
             "monto_apertura" to montoApertura
         )
         socketManager.sendAction("CASH_OPEN", params, requestId)
     }
-
-    /**
-     * Verifica si el empleado tiene una caja abierta actualmente.
-     */
     fun getCashStatus(idEmpleado: Int) {
-        socketManager.sendAction("CASH_GET_STATUS", mapOf("id_empleado" to idEmpleado))
+        val idSucursal = sessionManager.getSession()?.idSucursal ?: -1
+        val params = mapOf(
+            "id_empleado" to idEmpleado,
+            "id_sucursal" to idSucursal
+        )
+        socketManager.sendAction("CASH_GET_STATUS", params)
     }
-
-    /**
-     * Registra un ingreso o egreso manual (ej. pago de servicios, limpieza).
-     */
     fun addManualMovement(idSesion: Int, tipo: String, monto: Double, motivo: String, requestId: String) {
         val params = mapOf(
             "id_sesion" to idSesion,
@@ -157,10 +143,6 @@ class CashRepository(private val socketManager: SocketManager) {
         )
         socketManager.sendAction("CASH_ADD_MOVEMENT", params, requestId)
     }
-
-    /**
-     * Realiza el arqueo y cierra la sesión de caja.
-     */
     fun closeCash(idSesion: Int, montoCierre: Double, requestId: String) {
         val params = mapOf(
             "id_sesion" to idSesion,

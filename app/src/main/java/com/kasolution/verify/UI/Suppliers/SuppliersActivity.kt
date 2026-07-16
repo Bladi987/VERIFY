@@ -7,6 +7,7 @@ import android.text.TextWatcher
 import android.view.View
 import android.view.animation.AnimationUtils
 import android.view.inputmethod.InputMethodManager
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
@@ -17,8 +18,8 @@ import com.kasolution.verify.UI.Suppliers.fragment.SuppliersFormDialogFragment
 import com.kasolution.verify.domain.supplier.model.Supplier
 import com.kasolution.verify.UI.Suppliers.viewModel.SuppliersViewModel
 import com.kasolution.verify.core.AppProvider
-import com.kasolution.verify.core.utils.BottomSheetHelper
 import com.kasolution.verify.core.utils.DialogHelper
+import com.kasolution.verify.core.utils.NewBottonSheetHelper
 import com.kasolution.verify.core.utils.ProgressHelper
 import com.kasolution.verify.core.utils.ToastHelper
 
@@ -73,6 +74,20 @@ class SuppliersActivity : AppCompatActivity() {
         binding.btnSearch.setOnClickListener {
             alternarTitulo()
         }
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (NewBottonSheetHelper.isSheetVisible()) {
+                    // Si el menú está abierto, lo cerramos y NO salimos de la activity
+                    NewBottonSheetHelper.closeSheetDirectly()
+                } else {
+                    // Si el menú NO está abierto, desactivamos este callback y dejamos que
+                    // la activity se cierre normalmente con el siguiente "atrás"
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                }
+            }
+
+        })
     }
     private fun initRecycler() {
         lmanager = LinearLayoutManager(this)
@@ -95,7 +110,7 @@ class SuppliersActivity : AppCompatActivity() {
         selectedSupplier = supplier
         adapter.setSelectedItem(position)
 
-        BottomSheetHelper.showInventoryOptions(
+        NewBottonSheetHelper.showInventoryOptions(
             activity = this,
             cabeceraName = "Proveedor",
             name = supplier.nombre,

@@ -35,7 +35,8 @@ class SalesViewModel(
     val userId: Int = sesionManager.getUserId()
     val userName: String = sesionManager.getUserName()
     val userRole: String = sesionManager.getUserRolesForDisplay()
-    private val activeCashSessionId: Int get() = sesionManager.getActiveCashSessionId()
+    val idSucursal: Int = sesionManager.getSucursalId()
+    val activeCashSessionId: Int get() = sesionManager.getActiveCashSessionId()
     private val gson = Gson()
 
     // --- LIVE DATA DEL CARRITO ---
@@ -150,7 +151,7 @@ class SalesViewModel(
     // --- LÓGICA DE CARGA ---
 
     fun loadProducts() {
-        if (socketManager.isConnected) getProductsUseCase()
+        if (socketManager.isConnected) getProductsUseCase(idSucursal,"SALES")
     }
 
     fun loadClientes() {
@@ -266,11 +267,16 @@ class SalesViewModel(
         if (_isLoading.value == true) return
         if (_cartList.value.isNullOrEmpty()) return
 
-        val tieneEfectivo = pagos.any { it["metodo"] == "EFECTIVO" }
-        if (tieneEfectivo && activeCashSessionId <= 0) {
-            exception.postValue("Error: No hay una sesión de caja abierta para recibir efectivo.")
+//        val tieneEfectivo = pagos.any { it["metodo"] == "EFECTIVO" }
+//        if (tieneEfectivo && activeCashSessionId <= 0) {
+//            exception.postValue("Error: No hay una sesión de caja abierta para recibir efectivo.")
+//            return
+//        }
+        if (activeCashSessionId <= 0) {
+            exception.postValue("Error: Debe abrir una sesión de caja en esta sucursal para poder procesar la venta.")
             return
         }
+
         _isLoading.value = true
         _invoiceFullData.value = null
         currentRequestId = UUID.randomUUID().toString()

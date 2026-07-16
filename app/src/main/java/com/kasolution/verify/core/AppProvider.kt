@@ -237,12 +237,14 @@ object AppProvider {
         }
     }
 
-    fun provideInventoryViewModelFactory(): InventoryViewModelFactory {
+    fun provideInventoryViewModelFactory(context: Context): InventoryViewModelFactory {
+        val sessionManager = provideSessionManager(context)
         val repo = getInventoryRepository()
         val repoSupplier = getSuppliersRepository()
         val repoCategory = getCategoriesRepository()
 
         return InventoryViewModelFactory(
+            provideSessionManager(context),
             GetProductsUseCase(repo),
             SaveProductUseCase(repo),
             UpdateProductUseCase(repo),
@@ -268,44 +270,20 @@ object AppProvider {
 
     // --- VENTAS ---
 
-    private fun getSalesRepository(): SalesRepository {
+    private fun getSalesRepository(context: Context): SalesRepository {
         return salesRepositoryInstance ?: synchronized(this) {
-            salesRepositoryInstance ?: SalesRepository(socketManager).also {
+            salesRepositoryInstance ?: SalesRepository(socketManager,
+                provideSessionManager(context)).also {
                 salesRepositoryInstance = it
             }
         }
-    }
-
-    // --- GESTIÓN DE CAJA ---
-
-    private fun getCashRepository(): CashRepository {
-        return cashRepositoryInstance ?: synchronized(this) {
-            cashRepositoryInstance ?: CashRepository(socketManager).also {
-                cashRepositoryInstance = it
-            }
-        }
-    }
-
-    fun provideCashViewModelFactory(context: Context): CashViewModelFactory {
-        val repo = getCashRepository()
-        val sessionManager = provideSessionManager(context)
-
-        return CashViewModelFactory(
-            sessionManager = sessionManager,
-            openCashUseCase = OpenCashUseCase(repo),
-            closeCashUseCase = CloseCashUseCase(repo),
-            getCashStatusUseCase = GetCashStatusUseCase(repo),
-            addCashMovementUseCase = AddCashMovementUseCase(repo),
-            getCashHistoryUseCase = GetCashHistoryUseCase(repo),
-            socketManager = socketManager
-        )
     }
 
     fun provideSalesViewModelFactory(context: Context): SalesViewModelFactory {
         val sessionManager = provideSessionManager(context)
         val repoInventory = getInventoryRepository()
         val repoClient = getClientsRepository()
-        val repoSale = getSalesRepository()
+        val repoSale = getSalesRepository(context)
 
 
 
@@ -320,6 +298,36 @@ object AppProvider {
             socketManager
         )
     }
+
+    // --- GESTIÓN DE CAJA ---
+
+    private fun getCashRepository(context: Context): CashRepository {
+        return cashRepositoryInstance ?: synchronized(this) {
+            cashRepositoryInstance ?: CashRepository(
+                socketManager,
+                provideSessionManager(context)
+            ).also {
+                cashRepositoryInstance = it
+            }
+        }
+    }
+
+    fun provideCashViewModelFactory(context: Context): CashViewModelFactory {
+        val repo = getCashRepository(context)
+        val sessionManager = provideSessionManager(context)
+
+        return CashViewModelFactory(
+            sessionManager = sessionManager,
+            openCashUseCase = OpenCashUseCase(repo),
+            closeCashUseCase = CloseCashUseCase(repo),
+            getCashStatusUseCase = GetCashStatusUseCase(repo),
+            addCashMovementUseCase = AddCashMovementUseCase(repo),
+            getCashHistoryUseCase = GetCashHistoryUseCase(repo),
+            socketManager = socketManager
+        )
+    }
+
+
 
     private fun getPurchaseRepository(): PurchaseRepository {
         return purchaseRepositoryInstance ?: synchronized(this) {
@@ -355,6 +363,7 @@ object AppProvider {
             }
         }
     }
+
     fun provideReportesViewModelFactory(context: Context): ReportesViewModelFactory {
         val sessionManager = provideSessionManager(context)
         val repoReporte = getReporteRepository()
@@ -369,6 +378,7 @@ object AppProvider {
             socketManager = socketManager
         )
     }
+
     //sucursal
     private fun getSucursalRepository(): SucursalRepository {
         return sucursalRepositoryInstance ?: synchronized(this) {
@@ -389,6 +399,7 @@ object AppProvider {
             socketManager
         )
     }
+
     //roles
     private fun getRoleRepository(): RolRepository {
         return roleRepositoryInstance ?: synchronized(this) {

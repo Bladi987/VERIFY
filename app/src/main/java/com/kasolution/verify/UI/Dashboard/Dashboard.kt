@@ -45,6 +45,8 @@ class Dashboard : AppCompatActivity() {
 
         binding.tvUserName.text = viewModel.userName
         binding.tvUserRole.text = viewModel.userRole
+        binding.tvSucursal.text = viewModel.sucursal
+
 
         // Ejemplo de logout
         binding.btnLogout.setOnClickListener {

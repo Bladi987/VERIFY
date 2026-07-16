@@ -8,9 +8,9 @@ import android.util.Log
 import android.view.View
 import android.view.animation.AnimationUtils
 import android.view.inputmethod.InputMethodManager
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.kasolution.verify.R
@@ -19,15 +19,12 @@ import com.kasolution.verify.UI.Employees.fragment.EmpleadosFormDialogFragment
 import com.kasolution.verify.UI.Employees.fragment.PermisosEspecialesDialogFragment
 import com.kasolution.verify.domain.employees.model.Employee
 import com.kasolution.verify.UI.Employees.viewModel.EmpleadosViewModel
-import com.kasolution.verify.UI.Inventory.fragment.ProductFormDialogFragment
 import com.kasolution.verify.core.AppProvider
-import com.kasolution.verify.core.utils.BottomSheetHelper
 import com.kasolution.verify.core.utils.DialogHelper
+import com.kasolution.verify.core.utils.NewBottonSheetHelper
 import com.kasolution.verify.core.utils.ProgressHelper
 import com.kasolution.verify.core.utils.ToastHelper
 import com.kasolution.verify.databinding.ActivityEmpleadosBinding
-import com.kasolution.verify.databinding.DialogSelectorRolesCardBinding
-import com.kasolution.verify.domain.Inventory.model.Product
 
 class EmployeesActivity : AppCompatActivity() {
     private val TAG = "EmpleadosActivity"
@@ -80,6 +77,20 @@ class EmployeesActivity : AppCompatActivity() {
         binding.btnSearch.setOnClickListener {
             alternarTitulo()
         }
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (NewBottonSheetHelper.isSheetVisible()) {
+                    // Si el menú está abierto, lo cerramos y NO salimos de la activity
+                    NewBottonSheetHelper.closeSheetDirectly()
+                } else {
+                    // Si el menú NO está abierto, desactivamos este callback y dejamos que
+                    // la activity se cierre normalmente con el siguiente "atrás"
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                }
+            }
+
+        })
     }
 
 
@@ -106,7 +117,7 @@ class EmployeesActivity : AppCompatActivity() {
         binding.etSearch.clearFocus()
         selectedEmpleado = empleado
         adapter.setSelectedItem(position)
-        BottomSheetHelper.showInventoryOptions(
+        NewBottonSheetHelper.showEmployeeOptions(
             activity = this,
             cabeceraName = "Empleado",
             name = empleado.nombre,
@@ -134,6 +145,7 @@ class EmployeesActivity : AppCompatActivity() {
             }
         )
     }
+
 
     private fun setupObservers() {
         viewModel.empleadosList.observe(this) { lista ->

@@ -20,6 +20,15 @@
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/tvSucursal"
+        android:text="sucursal"
+        app:layout_constraintStart_toEndOf="@+id/tv_app_title"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/btn_logout"
+        app:layout_constraintBottom_toTopOf="@+id/ll_user_role"/>
 
     <LinearLayout
         android:id="@+id/ll_user_role"

@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.kasolution.verify.data.local.SessionManager
 import com.kasolution.verify.domain.supplier.model.Supplier
 import com.kasolution.verify.data.network.SocketManager
 import com.kasolution.verify.domain.Inventory.model.Category
@@ -18,6 +19,7 @@ import com.kasolution.verify.domain.usecases.Suppliers.GetSuppliersUseCase
 import java.util.UUID
 
 class InventoryViewModel(
+    private val sesionManager: SessionManager,
     private val getProductsUseCase: GetProductsUseCase,
     private val saveProductUseCase: SaveProductUseCase,
     private val updateProductUseCase: UpdateProductUseCase,
@@ -30,6 +32,7 @@ class InventoryViewModel(
 
     private val TAG = "InventoryViewModel"
     private var currentRequestId: String? = null
+    val idSucursal: Int = sesionManager.getSucursalId()
 
     private val _productsList = MutableLiveData<List<Product>>()
     val productsList: LiveData<List<Product>> get() = _productsList
@@ -118,7 +121,10 @@ class InventoryViewModel(
     /* --- MÉTODOS DE CARGA --- */
 
     fun loadInitialData() {
-        // Cargamos auxiliares primero y productos al final para que el loading sea coherente
+        if (idSucursal <= 0) {
+            exception.postValue("Error: No se puede inicializar datos sin una sucursal válida.")
+            return
+        }
         loadCategories()
         loadSuppliers()
         loadProducts()
@@ -127,7 +133,7 @@ class InventoryViewModel(
     fun loadProducts() {
         if (_isLoading.value == true) return
         _isLoading.postValue(true)
-        if (socketManager.isConnected) getProductsUseCase()
+        if (socketManager.isConnected) getProductsUseCase(idSucursal,"INVENTORY")
         else exception.postValue("Servidor desconectado")
     }
 
@@ -139,7 +145,7 @@ class InventoryViewModel(
     fun saveProduct(product: Product) {
         _isLoading.postValue(true)
         currentRequestId = UUID.randomUUID().toString()
-        saveProductUseCase(product, currentRequestId!!)
+        saveProductUseCase(product, idSucursal,currentRequestId!!)
     }
 
     fun updateProduct(product: Product) {

@@ -1,76 +1,101 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:background="@color/white_pure"
-    android:orientation="vertical"
-    android:padding="16dp">
-
-    <TextView
-        android:id="@+id/tv_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Permisos Especiales"
-        android:textColor="@color/grey_text_dark"
-        android:textSize="18sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/tv_employee_subtitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:text="Empleado: Cargando..."
-        android:textColor="@color/grey_text_secondary"
-        android:textSize="14sp" />
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginTop="12dp"
-        android:layout_marginBottom="12dp"
-        android:background="@color/grey_text_secondary"
-        android:alpha="0.2" />
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_permissions"
-        android:layout_width="match_parent"
-        android:layout_height="320dp"
-        android:clipToPadding="false"
-        android:paddingBottom="8dp"
-        tools:listitem="@layout/item_permission_switch"/>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginBottom="12dp"
-        android:background="@color/grey_text_secondary"
-        android:alpha="0.2" />
+    app:cardBackgroundColor="@color/white_pure"
+    app:cardCornerRadius="28dp"
+    app:cardElevation="0dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="end">
-
-        <Button
-            android:id="@+id/btn_cancel"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Cancelar"
-            android:textColor="@color/grey_text_secondary" />
+            android:gravity="center"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/tv_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Permisos Especiales"
+                android:textColor="@color/grey_text_dark"
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
-        <Button
-            android:id="@+id/btn_save"
-            android:layout_width="wrap_content"
+            <TextView
+                android:id="@+id/tv_employee_subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Empleado: Cargando..."
+                android:textColor="@color/grey_text_secondary"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="12dp"
+            android:alpha="0.2"
+            android:background="@color/grey_text_secondary" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_permissions"
+            android:layout_width="match_parent"
+            android:layout_height="320dp"
+            android:clipToPadding="false"
+            android:paddingBottom="8dp"
+            tools:listitem="@layout/item_permission_switch" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginBottom="12dp"
+            android:alpha="0.2"
+            android:background="@color/grey_text_secondary" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="Guardar Cambios"
-            android:backgroundTint="@color/selected_item_blue"
-            android:textColor="@color/white_pure" />
+            android:baselineAligned="false"
+            android:gravity="fill"
+            android:orientation="horizontal">
+
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_cancel"
+                style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:backgroundTint="#F2F2F7"
+                android:text="Cancelar"
+                android:textColor="#FF3B30"
+                android:textStyle="bold"
+                app:cornerRadius="16dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_save"
+                style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1.2"
+                android:backgroundTint="@color/blue_corporative_primary"
+                android:text="Guardar Cambios"
+                android:textStyle="bold"
+                app:cornerRadius="16dp"
+                app:elevation="2dp" />
+        </LinearLayout>
     </LinearLayout>
 
-</LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

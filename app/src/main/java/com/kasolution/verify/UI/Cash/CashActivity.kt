@@ -117,9 +117,6 @@ class CashActivity : AppCompatActivity() {
                 "CASH_OPEN"-> msg="¡Caja abierta correctamente!"
                 "CASH_ADD_MOVEMENT"->msg="Movimiento registrado"
                 "CASH_CLOSE_SUCCESS" -> {
-//                    val sheet = CashCloseSheet()
-//                    sheet.show(supportFragmentManager, "CashCloseSheet")
-//                    viewModel.resetOperationStatus() // Limpiamos para que no se repita
                 }
 
             }

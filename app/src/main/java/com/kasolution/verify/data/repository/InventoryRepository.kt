@@ -16,6 +16,8 @@ class InventoryRepository(private val socketManager: SocketManager) {
 
     private val TAG = "InventoryRepository"
     private val gson = Gson()
+    private var ultimaSucursalConsultada: Int = 0
+    private var mode: String = "SALE"
 
     // Callbacks para el ViewModel (Estructura idéntica a Clientes)
     var onProductsListReceived: ((List<Product>) -> Unit)? = null
@@ -26,7 +28,6 @@ class InventoryRepository(private val socketManager: SocketManager) {
     }
 
     fun registerObserver() {
-//        socketManager.removeObserver(TAG)
         socketManager.addObserver(TAG) { json ->
             try {
                 val element = JsonParser.parseString(json)
@@ -40,26 +41,56 @@ class InventoryRepository(private val socketManager: SocketManager) {
 
                 when (action) {
                     "PRODUCT_GET_ALL" -> {
-                        val type = object : TypeToken<SocketResponse<List<ProductDto>>>() {}.type
-                        val response: SocketResponse<List<ProductDto>> = gson.fromJson(json, type)
-
-                        // Mapeo seguro usando el DTO
-                        val listaDomain = response.data?.map { it.toDomain() } ?: emptyList()
-
-                        Log.d(TAG, "Productos mapeados con éxito: ${listaDomain.size}")
-
-                        Handler(Looper.getMainLooper()).post {
-                            onProductsListReceived?.invoke(listaDomain)
+                        val status = jsonObject.get("status")?.asString == "success"
+                        if (status) {
+                            val type =
+                                object : TypeToken<SocketResponse<List<ProductDto>>>() {}.type
+                            val response: SocketResponse<List<ProductDto>> =
+                                gson.fromJson(json, type)
+                            val listaDomain = response.data?.map { it.toDomain() } ?: emptyList()
+                            Handler(Looper.getMainLooper()).post {
+                                onProductsListReceived?.invoke(listaDomain)
+                            }
+                        } else {
+                            val message = jsonObject.get("message")?.asString
+                                ?: "Error desconocido al recuperar catálogo."
+                            Handler(Looper.getMainLooper()).post {
+                                onOperationResult?.invoke(action, false, message)
+                            }
+                        }
+                    }
+                    "PRODUCT_GET_BY_CODE" -> {
+                        val status = jsonObject.get("status")?.asString == "success"
+                        if (status) {
+                            val type = object : TypeToken<SocketResponse<ProductDto>>() {}.type
+                            val response: SocketResponse<ProductDto> =
+                                gson.fromJson(json, type)
+                            val productDomain = response.data?.toDomain()
+                            Handler(Looper.getMainLooper()).post {
+                                onProductsListReceived?.invoke(listOfNotNull(productDomain))
+                            }
+                        } else {
+                            val message = jsonObject.get("message")?.asString
+                                ?: "Error desconocido al recuperar catálogo."
+                            Handler(Looper.getMainLooper()).post {
+                                onOperationResult?.invoke(action, false, null)
+                            }
                         }
                     }
 
                     "PRODUCT_SAVE", "PRODUCT_UPDATE", "PRODUCT_DELETE" -> {
                         val status = jsonObject.get("status")?.asString == "success"
-                        val requestId = if (jsonObject.has("request_id") && !jsonObject.get("request_id").isJsonNull) {
-                            jsonObject.get("request_id").asString
+                        val requestId =
+                            if (jsonObject.has("request_id") && !jsonObject.get("request_id").isJsonNull) {
+                                jsonObject.get("request_id").asString
+                            } else null
+                        val errorMessage = if (!status && jsonObject.has("message")) {
+                            jsonObject.get("message").asString
                         } else null
-
-                        Log.d(TAG, "Resultado $action → success=$status requestId=$requestId")
+                        Log.d(
+                            TAG,
+                            "Resultado $action → success=$status requestId=$requestId error=$errorMessage"
+                        )
 
                         Handler(Looper.getMainLooper()).post {
                             onOperationResult?.invoke(action, status, requestId)
@@ -79,12 +110,24 @@ class InventoryRepository(private val socketManager: SocketManager) {
        PETICIONES AL SERVIDOR
        ============================ */
 
-    fun getProducts() {
-        socketManager.sendAction("PRODUCT_GET_ALL")
+    fun getProducts(idSucursal: Int,modo: String) {
+        mode=modo
+        if (idSucursal <= 0) return
+        this.ultimaSucursalConsultada = idSucursal
+        val params = mapOf("id_sucursal" to idSucursal,"modo" to mode)
+        socketManager.sendAction("PRODUCT_GET_ALL", params)
+    }
+    fun getProductByCode(code: String, idSucursal: Int, modo:String,requestId: String) {
+        if (idSucursal <= 0 || code.isBlank()) return
+        this.ultimaSucursalConsultada = idSucursal
+        val params = mapOf("id_sucursal" to idSucursal, "codigo" to code,"modo" to modo)
+        socketManager.sendAction("PRODUCT_GET_BY_CODE", params,requestId)
+
     }
 
-    fun saveProduct(product: Product, requestId: String) {
+    fun saveProduct(product: Product,idSucursal: Int, requestId: String) {
         val params = mapOf(
+            "id_sucursal" to idSucursal,
             "codigo" to product.codigo,
             "nombre" to product.nombre,
             "id_categoria" to product.idCategoria,
@@ -127,8 +170,12 @@ class InventoryRepository(private val socketManager: SocketManager) {
        ============================ */
 
     fun onSocketReconnected() {
-        Log.d(TAG, "Socket reconectado → Solicitando actualización de productos")
-        getProducts()
+        if (ultimaSucursalConsultada > 0) {
+            Log.d(TAG, "Socket reconectado → Solicitando actualización automática para sucursal $ultimaSucursalConsultada")
+            getProducts(ultimaSucursalConsultada,mode)
+        } else {
+            Log.w(TAG, "Socket reconectado pero no hay registro de sucursal previa para auto-refrescar.")
+        }
     }
 
     fun clear() {

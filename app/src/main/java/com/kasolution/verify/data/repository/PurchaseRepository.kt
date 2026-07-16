@@ -86,6 +86,7 @@ class PurchaseRepository(private val socketManager: SocketManager) {
     fun savePurchase(
         idProveedor: Int,
         idEmpleado: Int,
+        idSucursal: Int,
         idSesion: Int?,
         metodoPago: String,
         total: Double,
@@ -95,6 +96,7 @@ class PurchaseRepository(private val socketManager: SocketManager) {
         val params = mapOf(
             "id_proveedor" to idProveedor,
             "id_empleado" to idEmpleado,
+            "id_sucursal" to idSucursal,
             "id_sesion" to (idSesion ?: 0),
             "metodo_pago" to metodoPago.uppercase(),
             "total" to total,

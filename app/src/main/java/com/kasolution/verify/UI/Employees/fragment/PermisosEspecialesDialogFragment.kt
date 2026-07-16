@@ -1,18 +1,17 @@
 package com.kasolution.verify.UI.Employees.fragment
 
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
+import android.app.Dialog
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.Window
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.kasolution.verify.UI.Employees.adapter.EmployeePermissionsAdapter
 import com.kasolution.verify.UI.Employees.viewModel.EmpleadosViewModel
+import com.kasolution.verify.core.utils.DialogHelper
 import com.kasolution.verify.databinding.DialogPermisosEspecialesBinding
 
 class PermisosEspecialesDialogFragment : DialogFragment() {
@@ -49,14 +48,23 @@ class PermisosEspecialesDialogFragment : DialogFragment() {
         }
     }
 
+    // --- 1. CONSTRUCCIÓN CON EL HELPER GLOBAL ---
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        // Inflamos el binding aquí para pasárselo al creador base
+        _binding = DialogPermisosEspecialesBinding.inflate(layoutInflater)
+
+        val dialog = DialogHelper.createBaseDialog(requireContext(), binding.root)
+        // Bloqueo preventivo: evitar que se cierre al tocar afuera mientras se alteran permisos
+        dialog.setCanceledOnTouchOutside(false)
+        return dialog
+    }
+
+    // --- 2. RETORNO DE VISTA DIRECTO Y LIMPIO ---
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-        _binding = DialogPermisosEspecialesBinding.inflate(inflater, container, false)
-        dialog?.window?.apply {
-            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-            requestFeature(Window.FEATURE_NO_TITLE)
-        }
+        // Ya no necesitamos configurar el fondo transparente o sin título aquí,
+        // porque el DialogHelper ya lo hizo en el paso anterior.
         return binding.root
     }
 
@@ -73,7 +81,6 @@ class PermisosEspecialesDialogFragment : DialogFragment() {
         binding.btnCancel.setOnClickListener { dismiss() }
 
         binding.btnSave.setOnClickListener {
-
             val permisosDelAdapter = permissionsAdapter.getItems()
 
             val payloadExcepciones = permisosDelAdapter.map { permiso ->
@@ -89,9 +96,8 @@ class PermisosEspecialesDialogFragment : DialogFragment() {
     }
 
     private fun setupRecyclerView() {
-        // Inicializamos con una lista vacía. Ya no requerimos mapeos complejos en el callback.
         permissionsAdapter = EmployeePermissionsAdapter(emptyList()) { _, _ ->
-            // Puedes dejarlo vacío o usarlo para activar un botón de "Cambios sin guardar"
+            // Callback opcional por si necesitas activar estados visuales en tiempo real
         }
 
         binding.rvPermissions.apply {

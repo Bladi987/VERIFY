@@ -1,7 +1,7 @@
 package com.kasolution.verify.domain.auth.model
 import java.io.Serializable
 
-data class UserSession(
+data class AuthSession(
     val id: Int,
     val nombre: String,
     val idSucursal: Int,

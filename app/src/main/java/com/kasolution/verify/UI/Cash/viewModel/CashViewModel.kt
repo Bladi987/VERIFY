@@ -149,8 +149,8 @@ class CashViewModel(
                         Log.d(tag, "mensaje de reporte: $message")
                     }
 
-                    "CASH_MOVEMENT" -> {
-                        loadHistory() // Recargar lista tras un ingreso/egreso
+                    "CASH_ADD_MOVEMENT" -> {
+                        loadHistory()
                     }
                 }
                 _operationSuccess.postValue(accion)
@@ -160,7 +160,6 @@ class CashViewModel(
                     exception.postValue("Error")
                     checkCurrentStatus()
                 } else {
-                    // Es un error real (ej. "Monto inválido")
                     exception.postValue(message ?: "Error desconocido")
                 }
             }
@@ -168,9 +167,7 @@ class CashViewModel(
         repo.onCashCloseReportReceived = { report ->
             Log.d(tag, "Reporte de cierre recibido: $report")
             _closeReport.postValue(report)
-            // Al cerrar con éxito, limpiamos la sesión localmente
             updateLocalSession(0)
-            // Opcional: Limpiar el historial para que la vista se vacíe al cerrar
             _cashHistory.postValue(emptyList())
             _operationSuccess.postValue("CASH_CLOSE_SUCCESS")
             _isLoading.postValue(false)

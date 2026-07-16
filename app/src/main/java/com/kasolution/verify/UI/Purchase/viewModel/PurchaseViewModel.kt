@@ -34,6 +34,7 @@ class PurchaseViewModel(
     val userId: Int = sesionManager.getUserId()
     val userName: String = sesionManager.getUserName()
     val userRole: String = sesionManager.getUserRolesForDisplay()
+    val idSucursal: Int = sesionManager.getSucursalId()
 
     // NUEVO: Obtener la sesión de caja activa (Para egresos en EFECTIVO)
     private val activeCashSessionId: Int get() = sesionManager.getActiveCashSessionId()
@@ -138,7 +139,7 @@ class PurchaseViewModel(
         else _isLoading.postValue(false)
     }
 
-    fun loadProducts() = if (socketManager.isConnected) getProductsUseCase() else Unit
+    fun loadProducts() = if (socketManager.isConnected) getProductsUseCase(idSucursal,"PURCHASE") else Unit
     fun loadSuppliers() = if (socketManager.isConnected) getSuppliersUseCase() else Unit
 
     // --- LÓGICA DE ANULACIÓN ---
@@ -223,10 +224,10 @@ class PurchaseViewModel(
         if (_cartList.value.isNullOrEmpty()) return
 
         // Validación: Si es efectivo, DEBE haber una caja abierta
-        if (metodoPago == "EFECTIVO" && activeCashSessionId <= 0) {
-            exception.postValue("Error: No puedes comprar en efectivo sin una caja abierta.")
-            return
-        }
+//        if (metodoPago == "EFECTIVO" && activeCashSessionId <= 0) {
+//            exception.postValue("Error: No puedes comprar en efectivo sin una caja abierta.")
+//            return
+//        }
 
         _isLoading.value = true
         currentRequestId = UUID.randomUUID().toString()
@@ -243,8 +244,9 @@ class PurchaseViewModel(
         savePurchaseUseCase(
             idProveedor,
             idEmpleado,
-            activeCashSessionId, // Nuevo parámetro
-            metodoPago,          // Nuevo parámetro
+            idSucursal,
+            activeCashSessionId,
+            metodoPago,
             _totalCompra.value ?: 0.0,
             detalles,
             currentRequestId!!
